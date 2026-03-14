@@ -123,10 +123,16 @@
             const btn = document.getElementById('generateBtn');
             const status = document.getElementById('status');
             
+            // 环境检测：防止用户在本地打开文件时生成错误的本地链接
+            if (window.location.protocol === 'file:') {
+                alert("🔴 检测到您正在打开本地文件！\n\n请先访问您部署在 Render 的域名地址（例如 https://xxx.onrender.com/sharer.html），从线上页面点击分享，否则生成的链接别人无法打开。");
+                return;
+            }
+
             // 生成 4 位密码和随机房间 ID
             const password = String(Math.floor(1000 + Math.random() * 9000));
             const roomId = Math.random().toString(36).substring(7);
-            const channel = `iosshare-${roomId}-${password}`; // 频道名包含密码用于校验
+            const channel = `iosshare-${roomId}-${password}`;
 
             try {
                 btn.disabled = true;
@@ -134,15 +140,14 @@
 
                 client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
                 
-                // 必须在 client.join 前启动屏幕共享，方便用户选对窗口后才加入
                 screenTrack = await AgoraRTC.createScreenVideoTrack({
                     encoderConfig: { width: 1280, height: 720, frameRate: 25, bitrate: 2000 }
-                }, "auto"); // 尝试 auto 弹窗
+                }, "auto");
 
                 await client.join(APP_ID, channel, null, "sharer");
                 await client.publish(screenTrack);
 
-                // 生成观看链接 (自动识别 Gitee/COS 域名，确保通用性；使用 # 绕过下载拦截)
+                // 生成观看链接 (自适应当前部署域名，全网通用)
                 const baseUrl = window.location.origin + window.location.pathname.replace('sharer.html', '');
                 const watchUrl = `${baseUrl}index.html#room=${roomId}`;
                 
