@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>分享 iPhone 屏幕</title>
+    <title>分享美好，记录生活</title>
     <style>
         body {
             margin: 0;
@@ -161,7 +161,7 @@
                 btn.disabled = false;
 
                 document.getElementById('copyUrl').onclick = () => {
-                    const text = `我正在分享 iPhone 屏幕，点击链接观看：\n${watchUrl}\n密码：${password}`;
+                    const text = `点击链接观看共享：\n${watchUrl}\n\n验证码：${password}`;
                     navigator.clipboard.writeText(text);
                     alert("已复制到剪贴板");
                 };

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>观看 iOS 屏幕共享</title>
+    <title>分享美好，记录生活</title>
     <style>
         body {
             margin: 0;
@@ -156,18 +156,21 @@
                         statusBar.innerText = "正在加载画面...";
                         const remoteTrack = await client.subscribe(user, mediaType);
                         remoteTrack.play("player");
-                        statusBar.innerText = "🟢 正在观看 iOS 屏幕";
+                        // 播放成功后隐藏顶部的状态栏
+                        statusBar.style.display = "none";
                     }
                 });
 
                 client.on("user-unpublished", (user, mediaType) => {
                     if (mediaType === "video") {
+                        statusBar.style.display = "block";
                         statusBar.innerText = "🔴 分享者已停止共享";
                         document.getElementById("player").innerHTML = "";
                     }
                 });
 
                 client.on("peer-leave", () => {
+                   statusBar.style.display = "block";
                    statusBar.innerText = "🔴 分享者已离开";
                 });
 
