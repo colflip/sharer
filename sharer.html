@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分享 iPhone 屏幕</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h2 { margin-bottom: 30px; color: #007aff; }
+
+        .guide {
+            text-align: left;
+            background: #2c2c2e;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        .guide b { color: #fff; }
+
+        #generateBtn {
+            width: 100%;
+            font-size: 18px;
+            font-weight: 600;
+            padding: 15px;
+            background: #007aff;
+            border: none;
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #generateBtn:hover { background: #0056b3; }
+
+        #shareInfo {
+            display: none;
+            margin-top: 30px;
+            text-align: left;
+            word-break: break-all;
+        }
+
+        .info-card {
+            background: #2c2c2e;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #34c759;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #3a3a3c;
+            border: none;
+            color: #007aff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #8e8e93;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>iOS 屏幕分享助手</h2>
+        
+        <div class="guide">
+            <b>操作指引：</b><br>
+            1. 在 Mac 上打开 <b>"iPhone 镜像"</b> App 并连接手机。<br>
+            2. 点击下方按钮，在浏览器弹出的窗口选择中：<br>
+            &nbsp;&nbsp;&nbsp;👉 切换到 <b>"窗口" (Window)</b> 标签页<br>
+            &nbsp;&nbsp;&nbsp;👉 找到预览图为 iPhone 的窗口并点击 <b>"分享"</b>
+        </div>
+
+        <button id="generateBtn">开始共享 (4位密码)</button>
+        <div id="status">准备就绪</div>
+
+        <div id="shareInfo">
+            <div class="info-card">
+                <p style="margin:0 0 10px 0; color:#34c759; font-weight:bold;">✅ 分享已开启</p>
+                <div id="urlContainer" style="font-size:14px; background:#111; padding:10px; border-radius:6px; margin-bottom:10px;"></div>
+                <p style="margin:5px 0;">密码：<b id="pwdCode" style="font-size:24px; color:#fff;"></b></p>
+                <button class="copy-btn" id="copyUrl">复制完整信息</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.23.1.js"></script>
+    <script>
+        const APP_ID = "15b593b2d51e4017bc1c684201630356";
+        let client, screenTrack;
+
+        document.getElementById('generateBtn').onclick = async () => {
+            const btn = document.getElementById('generateBtn');
+            const status = document.getElementById('status');
+            
+            // 生成 4 位密码和随机房间 ID
+            const password = String(Math.floor(1000 + Math.random() * 9000));
+            const roomId = Math.random().toString(36).substring(7);
+            const channel = `iosshare-${roomId}-${password}`; // 频道名包含密码用于校验
+
+            try {
+                btn.disabled = true;
+                status.innerText = "正在请求共享权限...";
+
+                client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+                
+                // 必须在 client.join 前启动屏幕共享，方便用户选对窗口后才加入
+                screenTrack = await AgoraRTC.createScreenVideoTrack({
+                    encoderConfig: { width: 1280, height: 720, frameRate: 25, bitrate: 2000 }
+                }, "auto"); // 尝试 auto 弹窗
+
+                await client.join(APP_ID, channel, null, "sharer");
+                await client.publish(screenTrack);
+
+                // 生成观看链接 (自动识别 Gitee/COS 域名，确保通用性；使用 # 绕过下载拦截)
+                const baseUrl = window.location.origin + window.location.pathname.replace('sharer.html', '');
+                const watchUrl = `${baseUrl}index.html#room=${roomId}`;
+                
+                document.getElementById('urlContainer').innerText = watchUrl;
+                document.getElementById('pwdCode').innerText = password;
+                document.getElementById('shareInfo').style.display = 'block';
+                
+                status.innerText = "🟢 分享中 - 请勿关闭此页面";
+                btn.innerText = "修改分享 (需停止)";
+                btn.onclick = () => window.location.reload();
+                btn.disabled = false;
+
+                document.getElementById('copyUrl').onclick = () => {
+                    const text = `我正在分享 iPhone 屏幕，点击链接观看：\n${watchUrl}\n密码：${password}`;
+                    navigator.clipboard.writeText(text);
+                    alert("已复制到剪贴板");
+                };
+
+                // 监听停止共享（点击浏览器顶部的停止或关闭窗口）
+                screenTrack.on("track-ended", () => {
+                    window.location.reload();
+                });
+
+            } catch (e) {
+                console.error(e);
+                btn.disabled = false;
+                status.innerText = "准备就绪";
+                if (e.code === "PERMISSION_DENIED") {
+                    alert("用户取消了屏幕共享或未授权");
+                } else {
+                    alert("启动失败请检查：\n1. iPhone 镜像是否已打开并出画面\n2. 浏览器弹出选择时是否选了 iPhone 窗口\n" + e.message);
+                }
+            }
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>观看 iOS 屏幕共享</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #login-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: #111;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        h2 { margin-bottom: 30px; font-weight: 400; }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            letter-spacing: 12px;
+            text-align: center;
+            background: #2c2c2e;
+            border: 1px solid #3a3a3c;
+            color: #fff;
+            border-radius: 12px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        input:focus { border-color: #007aff; }
+
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            background: #007aff;
+            border: none;
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        #video-container {
+            display: none;
+            position: relative;
+            flex: 1;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 保持 iOS 屏幕比例 */
+        }
+
+        #status-bar {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            font-size: 12px;
+            color: #ccc;
+            text-align: center;
+            z-index: 10;
+        }
+
+        #error-msg {
+            color: #ff453a;
+            font-size: 14px;
+            margin-top: 15px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>输入 4 位密码观看</h2>
+            <input type="tel" id="pwdInput" placeholder="····" maxlength="4" autocomplete="off">
+            <button id="enterBtn">确认进入</button>
+            <div id="error-msg"></div>
+        </div>
+    </div>
+
+    <div id="video-container">
+        <div id="status-bar">等待画面连接...</div>
+        <div id="player" style="width:100%; height:100%;"></div>
+    </div>
+
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.23.1.js"></script>
+    <script>
+        const APP_ID = "15b593b2d51e4017bc1c684201630356";
+        
+        // 从 Hash 解析 room 参数 (例如 #room=io8gvd)
+        const getHashParam = (name) => {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            return params.get(name);
+        };
+        const roomId = getHashParam('room');
+
+        if (!roomId) {
+            document.body.innerHTML = '<div style="padding:50px; text-align:center;"><h2>❌ 链接无效</h2><p>请重新获取分享链接</p></div>';
+        }
+
+        document.getElementById('enterBtn').onclick = async () => {
+            const pwd = document.getElementById('pwdInput').value.trim();
+            const errorMsg = document.getElementById('error-msg');
+
+            if (pwd.length !== 4) {
+                errorMsg.innerText = "请输入 4 位数字密码";
+                return;
+            }
+
+            // 切换 UI
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('video-container').style.display = 'block';
+            const statusBar = document.getElementById('status-bar');
+
+            try {
+                const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+                // 构造与分享端一致的频道名
+                const channel = `iosshare-${roomId}-${pwd}`;
+                
+                await client.join(APP_ID, channel, null, "viewer_" + Math.floor(Math.random()*1000));
+                statusBar.innerText = "已进入房间，等待分享者推流...";
+
+                client.on("user-published", async (user, mediaType) => {
+                    if (mediaType === "video") {
+                        statusBar.innerText = "正在加载画面...";
+                        const remoteTrack = await client.subscribe(user, mediaType);
+                        remoteTrack.play("player");
+                        statusBar.innerText = "🟢 正在观看 iOS 屏幕";
+                    }
+                });
+
+                client.on("user-unpublished", (user, mediaType) => {
+                    if (mediaType === "video") {
+                        statusBar.innerText = "🔴 分享者已停止共享";
+                        document.getElementById("player").innerHTML = "";
+                    }
+                });
+
+                client.on("peer-leave", () => {
+                   statusBar.innerText = "🔴 分享者已离开";
+                });
+
+            } catch (e) {
+                console.error(e);
+                alert("进入失败：可能密码错误或连接超时\n" + e.message);
+                window.location.reload();
+            }
+        };
+
+        // 自动聚焦
+        window.onload = () => document.getElementById('pwdInput').focus();
+    </script>
+</body>
+
+</html>
