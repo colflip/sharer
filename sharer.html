@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>分享美好，记录生活</title>
+    <title>ScreenCast | 极简投屏</title>
     <style>
         body {
             margin: 0;
@@ -91,17 +91,14 @@
 
 <body>
     <div class="container">
-        <h2>爱分享爱生活 屏幕共享</h2>
+        <h2>ScreenCast <span style="font-size: 16px; color: #8e8e93; font-weight: normal;">| 极简投屏</span></h2>
         
-        <div class="guide">
-            <b>操作指引：</b><br>
-            不论是分享手机镜像、电脑桌面、还是某个网页，只需：<br>
-            1. 点击下方按钮，浏览器会自动弹出窗口选择列表。<br>
-            2. 在弹窗中切换到 <b>"Chrome 标签页"</b>、<b>"窗口"</b> 或 <b>"整个屏幕"</b>。<br>
-            3. 选择您想分享的内容并点击 <b>"分享"</b> 即可开始。
+        <div class="guide" style="background: transparent; padding: 0; margin-bottom: 30px;">
+            <p style="color: #fff; font-size: 16px; margin-bottom: 5px;">一键分享屏幕、窗口或网页内容。</p>
+            <p style="color: #8e8e93; font-size: 13px; margin: 0;">点击下方按钮 → 选择共享区域 → 获取邀请码</p>
         </div>
 
-        <button id="generateBtn">开始共享 (4位验证码)</button>
+        <button id="generateBtn">发起投屏</button>
         <div id="status">准备就绪</div>
 
         <div id="shareInfo">
@@ -161,9 +158,9 @@
                 btn.disabled = false;
 
                 document.getElementById('copyUrl').onclick = () => {
-                    const text = `点击链接观看共享：\n${watchUrl}\n\n验证码：${password}`;
+                    const text = `加入我的投屏：\n${watchUrl}\n\n入会密码：${password}`;
                     navigator.clipboard.writeText(text);
-                    alert("已复制到剪贴板");
+                    alert("邀请信息已复制");
                 };
 
                 // 监听停止共享（点击浏览器顶部的停止或关闭窗口）
