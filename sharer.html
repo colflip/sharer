@@ -86,6 +86,41 @@
             font-size: 14px;
             color: #8e8e93;
         }
+        .viewer-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            text-align: left;
+            display: none;
+        }
+
+        .viewer-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #8e8e93;
+            font-weight: 500;
+        }
+
+        .viewer-item {
+            font-size: 14px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+        }
+        
+        .viewer-item:last-child {
+            border-bottom: none;
+        }
+
+        .viewer-item .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #34c759;
+            margin-right: 10px;
+        }
     </style>
 </head>
 
@@ -112,6 +147,11 @@
                 <p style="margin:5px 0;">密码：<b id="pwdCode" style="font-size:24px; color:#fff;"></b></p>
                 <button class="copy-btn" id="copyUrl">复制完整信息</button>
             </div>
+        </div>
+
+        <div id="viewerList" class="viewer-panel">
+            <h3>实时访客状态</h3>
+            <div id="viewersContainer"></div>
         </div>
     </div>
 
@@ -155,6 +195,7 @@
                 document.getElementById('urlContainer').innerText = watchUrl;
                 document.getElementById('pwdCode').innerText = password;
                 document.getElementById('shareInfo').style.display = 'block';
+                document.getElementById('viewerList').style.display = 'block';
                 
                 status.innerText = "🟢 分享中 - 请勿关闭此页面";
                 btn.innerText = "修改分享 (需停止)";
@@ -167,6 +208,30 @@
                     alert("邀请信息已复制");
                 };
 
+                // ===== 观众状态监听与透传解析 =====
+                const viewersContainer = document.getElementById('viewersContainer');
+
+                client.on("user-joined", (user) => {
+                    // 如果 UID 不是通过我们特定编码格式传入的，则跳过
+                    if (typeof user.uid !== 'string' || !user.uid.startsWith("viewer|")) return;
+                    
+                    const parts = user.uid.split("|");
+                    const deviceLabel = parts[1] || "未知设备";
+                    
+                    const el = document.createElement("div");
+                    el.className = "viewer-item";
+                    el.id = `viewer-${user.uid}`;
+                    el.innerHTML = `<div class="dot"></div><span>${deviceLabel} 正在观看</span>`;
+                    
+                    viewersContainer.appendChild(el);
+                });
+
+                client.on("user-left", (user) => {
+                    if (typeof user.uid !== 'string' || !user.uid.startsWith("viewer|")) return;
+                    const el = document.getElementById(`viewer-${user.uid}`);
+                    if (el) el.remove();
+                });
+                
                 // 监听停止共享（点击浏览器顶部的停止或关闭窗口）
                 screenTrack.on("track-ended", () => {
                     window.location.reload();
