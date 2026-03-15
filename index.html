@@ -135,6 +135,11 @@
 
         const APP_ID = "15b593b2d51e4017bc1c684201630356";
         
+        // 监听 URL 变化：解决同一窗口下重新打开链接不刷新的问题
+        window.addEventListener("hashchange", () => {
+            window.location.reload();
+        });
+
         // 从 Hash 解析 room 参数 (例如 #room=io8gvd)
         const getHashParam = (name) => {
             const hash = window.location.hash.substring(1);
@@ -172,7 +177,16 @@
                 const viewerUid = `viewer|${deviceLabel}|${randomId}`;
 
                 await client.join(APP_ID, channel, null, viewerUid);
-                statusBar.innerText = "已进入房间，等待分享者推流...";
+                statusBar.innerText = "已进入房间，等待画面...";
+
+                // 无后端状态探测：2.5 秒内频道没有分享者，则判定为密码错误或分享已结束
+                setTimeout(async () => {
+                    if (client.remoteUsers.length === 0) {
+                        alert("验证码错误，或分享者已结束投屏！\n请重新输入。");
+                        await client.leave();
+                        window.location.reload();
+                    }
+                }, 2500);
 
                 client.on("user-published", async (user, mediaType) => {
                     if (mediaType === "video") {
