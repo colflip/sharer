@@ -254,7 +254,6 @@
             <div class="control-item" data-q="high">1080P</div>
             <div class="control-item" data-q="pro_2k">2K</div>
         </div>
-        <p id="perfHint" style="font-size: 11px; color: #ff9f0a; margin: -8px 0 15px; display: none; text-align: center;">⚠️ 2K 模式对硬件要求极高，建议使用高性能电脑投屏</p>
 
         <div class="segmented-control" id="durationSelector">
             <div class="control-item" data-v="5">5m</div>
@@ -291,6 +290,8 @@
     <script>
         const APP_ID = "15b593b2d51e4017bc1c684201630356";
         let client, screenTrack;
+        let countdownTimer = null; // 全局定时器引用
+        let totalSecondsRemaining = 0; // 全局剩余秒数
 
         // 清晰度配置项 (升级版)
         const QUALITY_CONFIGS = {
@@ -304,14 +305,28 @@
 
         // 清晰度选择逻辑
         document.querySelectorAll('#qualitySelector .control-item').forEach(item => {
-            item.onclick = () => {
-                if (document.getElementById('generateBtn').disabled) return;
+            item.onclick = async () => {
+                if (document.getElementById('generateBtn').disabled && !screenTrack) return; // 只有在未开始投屏时才禁用
                 document.querySelectorAll('#qualitySelector .control-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 selectedQuality = item.getAttribute('data-q');
-                
-                // 性能提醒
-                document.getElementById('perfHint').style.display = (selectedQuality === 'pro_2k') ? 'block' : 'none';
+
+                // 如果正在投屏，动态应用新配置
+                if (screenTrack) {
+                    const config = QUALITY_CONFIGS[selectedQuality];
+                    try {
+                        await screenTrack.setEncoderConfiguration({
+                            width: config.width,
+                            height: config.height,
+                            frameRate: config.frameRate,
+                            bitrateMin: config.bitrateMin,
+                            bitrateMax: config.bitrateMax
+                        });
+                        console.log("清晰度已动态切换为:", selectedQuality);
+                    } catch (e) {
+                        console.error("动态切换清晰度失败:", e);
+                    }
+                }
             };
         });
 
@@ -319,7 +334,7 @@
         let selectedDuration = 20;
         document.querySelectorAll('#durationSelector .control-item').forEach(item => {
             item.onclick = () => {
-                if (document.getElementById('generateBtn').disabled) return;
+                if (document.getElementById('generateBtn').disabled && !screenTrack) return; // 只有在未开始投屏时才禁用
                 document.querySelectorAll('#durationSelector .control-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 
@@ -331,7 +346,37 @@
                     document.getElementById('customDurationBox').style.display = 'none';
                     selectedDuration = parseInt(val);
                 }
+
+                // 如果正在投屏，动态更新剩余时长
+                if (countdownTimer) {
+                    let newLimit = 0;
+                    if (selectedDuration === -1) {
+                        newLimit = parseInt(document.getElementById('customMinutesInput').value) || 30;
+                    } else {
+                        newLimit = selectedDuration;
+                    }
+                    
+                    if (newLimit > 0) {
+                        totalSecondsRemaining = newLimit * 60;
+                        console.log("时长已动态调整为:", newLimit, "分钟");
+                    } else {
+                        // 不限时长，清除定时器
+                        clearInterval(countdownTimer);
+                        countdownTimer = null;
+                        document.getElementById('status').innerText = "🟢 分享中 - 不限时长";
+                    }
+                }
             };
+        });
+
+        // 自定义时长输入动态更新逻辑
+        document.getElementById('customMinutesInput').addEventListener('input', function() {
+            if (countdownTimer && selectedDuration === -1) {
+                const newLimit = parseInt(this.value);
+                if (newLimit > 0) {
+                    totalSecondsRemaining = newLimit * 60;
+                }
+            }
         });
 
         document.getElementById('generateBtn').onclick = async () => {
@@ -391,7 +436,7 @@
 
                 status.innerText = "🟢 分享中 - 请勿关闭此页面";
 
-                // ===== 倒计时逻辑 =====
+                // ===== 倒计时初始化 =====
                 let limitMinutes = 0;
                 if (selectedDuration === -1) {
                     limitMinutes = parseInt(document.getElementById('customMinutesInput').value) || 30;
@@ -400,19 +445,24 @@
                 }
 
                 if (limitMinutes > 0) {
-                    let totalSeconds = limitMinutes * 60;
-                    const timer = setInterval(() => {
-                        totalSeconds--;
-                        if (totalSeconds <= 0) {
-                            clearInterval(timer);
+                    totalSecondsRemaining = limitMinutes * 60;
+                    if (countdownTimer) clearInterval(countdownTimer);
+                    
+                    countdownTimer = setInterval(() => {
+                        totalSecondsRemaining--;
+                        if (totalSecondsRemaining <= 0) {
+                            clearInterval(countdownTimer);
+                            countdownTimer = null;
                             alert("分享时间已到，投屏已自动结束。");
                             window.location.reload();
                         }
-                        const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-                        const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-                        const s = String(totalSeconds % 60).padStart(2, '0');
-                        status.innerText = `🟢 分享中 - 剩余时间 ${h}:${m}:${s}`;
+                        const h = String(Math.floor(totalSecondsRemaining / 3600)).padStart(2, '0');
+                        const m = String(Math.floor((totalSecondsRemaining % 3600) / 60)).padStart(2, '0');
+                        const s = String(totalSecondsRemaining % 60).padStart(2, '0');
+                        document.getElementById('status').innerText = `🟢 分享中 - 剩余时间 ${h}:${m}:${s}`;
                     }, 1000);
+                } else {
+                    document.getElementById('status').innerText = "🟢 分享中 - 不限时长";
                 }
 
                 btn.innerText = "修改分享 (需停止)";

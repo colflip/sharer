@@ -188,8 +188,15 @@
             document.body.innerHTML = '<div style="padding:50px; text-align:center;"><h2>❌ 链接无效</h2><p>请重新获取分享链接</p></div>';
         }
 
-        document.getElementById('enterBtn').onclick = async () => {
-            const pwd = document.getElementById('pwdInput').value.trim();
+        // 4 位邀请码自动进入逻辑
+        document.getElementById('password').addEventListener('input', function() {
+            if (this.value.length === 4) {
+                document.getElementById('joinBtn').click();
+            }
+        });
+
+        document.getElementById('joinBtn').onclick = async () => {
+            const pwd = document.getElementById('password').value.trim();
             const errorMsg = document.getElementById('error-msg');
 
             if (pwd.length !== 4) {
