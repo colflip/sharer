@@ -224,9 +224,13 @@
                 // 无后端状态探测：2.5 秒内频道没有分享者，则判定为密码错误或分享已结束
                 setTimeout(async () => {
                     if (client.remoteUsers.length === 0) {
-                        alert("验证码错误，或分享者已结束投屏！\n请重新输入。");
+                        errorMsg.innerText = "🔇 邀请码错误或分享已结束";
                         await client.leave();
-                        window.location.reload();
+                        // 恢复登录界面并清空输入
+                        document.getElementById('login-screen').style.display = 'flex';
+                        document.getElementById('video-container').style.display = 'none';
+                        document.getElementById('pwdInput').value = "";
+                        document.getElementById('pwdInput').focus();
                     }
                 }, 2500);
 

@@ -67,6 +67,14 @@
             background: #0056b3;
         }
 
+        #generateBtn.active {
+            background: #ff453a; /* 醒目的红色，提示停止 */
+        }
+
+        #generateBtn.active:hover {
+            background: #d73a2f;
+        }
+
         #shareInfo {
             display: none;
             margin-top: 30px;
@@ -465,8 +473,12 @@
                     document.getElementById('status').innerText = "🟢 分享中 - 不限时长";
                 }
 
-                btn.innerText = "修改分享 (需停止)";
-                btn.onclick = () => window.location.reload();
+                btn.innerText = "停止投屏";
+                btn.classList.add('active'); // 借用 active 样式使其变红或区分
+                btn.onclick = async () => {
+                    await cleanup();
+                    window.location.reload(); // 目前依然建议 reload 以确保 UI 状态完全重置
+                };
                 btn.disabled = false;
 
                 document.getElementById('copyUrl').onclick = () => {
