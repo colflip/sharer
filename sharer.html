@@ -103,15 +103,27 @@
         }
 
         .viewer-item {
-            font-size: 14px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 13px;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            gap: 8px;
         }
         
         .viewer-item:last-child {
             border-bottom: none;
+        }
+
+        .viewer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .viewer-main {
+            display: flex;
+            align-items: center;
         }
 
         .viewer-item .dot {
@@ -121,6 +133,24 @@
             background: #34c759;
             margin-right: 10px;
         }
+
+        .viewer-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            padding: 2px 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .tag-uid { background: rgba(0, 122, 255, 0.2); color: #007aff; }
+        .tag-net { background: rgba(52, 199, 89, 0.2); color: #34c759; }
+        .tag-res { background: rgba(255, 159, 10, 0.2); color: #ff9f0a; }
     </style>
 </head>
 
@@ -215,13 +245,38 @@
                     // 如果 UID 不是通过我们特定编码格式传入的，则跳过
                     if (typeof user.uid !== 'string' || !user.uid.startsWith("viewer|")) return;
                     
-                    const parts = user.uid.split("|");
-                    const deviceLabel = parts[1] || "未知设备";
+                    const p = user.uid.split("|");
+                    // 格式: viewer|osBrowser|res|dpr|net|lang|theme|uid|fingerprint
+                    const info = {
+                        osBrowser: p[1] || "未知设备",
+                        res: p[2] || "未知分辨率",
+                        dpr: p[3] || "1",
+                        net: p[4] || "未知网络",
+                        lang: p[5] || "zh",
+                        theme: p[6] || "light",
+                        uid: p[7] || "N/A",
+                        fp: p[8] || "N/A"
+                    };
                     
                     const el = document.createElement("div");
                     el.className = "viewer-item";
                     el.id = `viewer-${user.uid}`;
-                    el.innerHTML = `<div class="dot"></div><span>${deviceLabel} 正在观看</span>`;
+                    el.innerHTML = `
+                        <div class="viewer-header">
+                            <div class="viewer-main">
+                                <div class="dot"></div>
+                                <b style="color:#fff;">${info.osBrowser}</b>
+                            </div>
+                            <span class="tag tag-uid" title="持久化唯一标识">UID: ${info.uid}</span>
+                        </div>
+                        <div class="viewer-details">
+                            <span class="tag tag-res" title="屏幕分辨率">${info.res} @${info.dpr}x</span>
+                            <span class="tag tag-net" title="网络类型">${info.net.toUpperCase()}</span>
+                            <span class="tag" title="系统语言">${info.lang.toUpperCase()}</span>
+                            <span class="tag" title="主题偏好">${info.theme === 'dark' ? '🌙 深色' : '☀️ 浅色'}</span>
+                            <span class="tag" title="浏览器指纹 (简易哈希)">FP: ${info.fp}</span>
+                        </div>
+                    `;
                     
                     viewersContainer.appendChild(el);
                 });
