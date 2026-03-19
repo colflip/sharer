@@ -18,16 +18,20 @@
         }
 
         .container {
-            max-width: 600px;
             width: 100%;
-            background: #1e1e1e;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            background: #1c1c1e;
+            padding: 40px 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            text-align: center;
         }
 
         h2 {
+            margin-top: 0;
             margin-bottom: 30px;
+            font-size: 24px;
+            letter-spacing: -0.5px;
             color: #007aff;
         }
 
@@ -183,77 +187,46 @@
             color: #ff9f0a;
         }
 
-        /* 清晰度选择器样式 */
-        .quality-selector {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 6px;
-            margin-bottom: 20px;
-        }
-
-        .quality-item {
-            padding: 10px 0;
-            text-align: center;
-            font-size: 11px;
-            cursor: pointer;
-            border-radius: 9px;
-            background: #2c2c2e;
-            color: #8e8e93;
-            transition: 0.2s;
-            border: 1px solid transparent;
-        }
-
-        .quality-item.active {
-            background: #3a3a3c;
-            color: #007aff;
-            border-color: rgba(0, 122, 255, 0.3);
-            font-weight: 600;
-        }
-        /* 时长选择器样式 */
-        .duration-row {
+        /* 统一分段选择器样式 */
+        .segmented-control {
             display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 14px;
+            margin-bottom: 24px;
             justify-content: center;
-            gap: 6px;
-            margin-bottom: 6px;
         }
 
-        .duration-row:last-of-type {
-            margin-bottom: 20px;
-        }
-
-        .duration-item {
-            flex: 0 0 calc(20% - 6px);
-            padding: 8px 0;
-            background: #2c2c2e;
+        .control-item {
+            flex: 1;
+            padding: 12px 0;
             text-align: center;
-            font-size: 11px;
-            border-radius: 8px;
+            font-size: 14px;
             cursor: pointer;
+            border-radius: 10px;
             color: #8e8e93;
-            transition: 0.2s;
-            border: 1px solid transparent;
-            box-sizing: border-box;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .duration-item.active {
+        .control-item.active {
             background: #3a3a3c;
             color: #007aff;
-            border-color: rgba(0, 122, 255, 0.3);
             font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         #customDurationBox {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             display: none;
         }
 
         #customDurationBox input {
             width: 100%;
-            padding: 12px;
-            background: #1c1c1e;
-            border: 1px solid #3a3a3c;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: #fff;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 15px;
             outline: none;
             box-sizing: border-box;
@@ -266,48 +239,36 @@
     <div class="container">
         <h2>ScreenCast <span style="font-size: 16px; color: #8e8e93; font-weight: normal;">| 极简投屏</span></h2>
 
-        <div class="guide" style="background: transparent; padding: 0; margin-bottom: 30px; text-align: left;">
-            <p style="color: #fff; font-size: 15px; margin-top: 0; margin-bottom: 12px; font-weight: 500;">操作指引：</p>
-            <ol style="color: #8e8e93; font-size: 14px; margin: 0; padding-left: 20px; line-height: 1.6;">
+        <div class="guide" style="background: transparent; padding: 0; margin-bottom: 40px; text-align: left;">
+            <p style="color: #fff; font-size: 15px; margin-top: 0; margin-bottom: 16px; font-weight: 500;">操作指引：</p>
+            <ol style="color: #8e8e93; font-size: 14px; margin: 0; padding-left: 20px; line-height: 1.8;">
                 <li>点击下方按钮，浏览器会自动弹出窗口选择列表。</li>
                 <li>在弹窗中切换到 <b>"Chrome 标签页"</b>、<b>"窗口"</b> 或 <b>"整个屏幕"</b>。</li>
                 <li>选择您想分享的内容并点击 <b>"分享"</b> 即可开始。</li>
             </ol>
         </div>
 
-        <div style="text-align: left; margin-bottom: 8px;">
-            <label style="font-size: 13px; color: #8e8e93;">清晰度选择</label>
+        <div class="segmented-control" id="qualitySelector">
+            <div class="control-item" data-q="fluent">540P</div>
+            <div class="control-item active" data-q="standard">720P</div>
+            <div class="control-item" data-q="high">1080P</div>
+            <div class="control-item" data-q="pro_2k">2K</div>
         </div>
-        <div class="quality-selector" id="qualitySelector">
-            <div class="quality-item" data-q="fluent">540P</div>
-            <div class="quality-item active" data-q="standard">720P</div>
-            <div class="quality-item" data-q="high">1080P</div>
-            <div class="quality-item" data-q="ultra">极清</div>
-            <div class="quality-item" data-q="pro_2k">2K</div>
-        </div>
+        <p id="perfHint" style="font-size: 11px; color: #ff9f0a; margin: -8px 0 15px; display: none; text-align: center;">⚠️ 2K 模式对硬件要求极高，建议使用高性能电脑投屏</p>
 
-        <div style="text-align: left; margin-bottom: 8px;">
-            <label style="font-size: 13px; color: #8e8e93;">分享时长限制</label>
-        </div>
-        <div class="duration-row">
-            <div class="duration-item" data-v="5">5m</div>
-            <div class="duration-item" data-v="10">10m</div>
-            <div class="duration-item active" data-v="20">20m</div>
-            <div class="duration-item" data-v="30">30m</div>
-        </div>
-        <div class="duration-row">
-            <div class="duration-item" data-v="60">1h</div>
-            <div class="duration-item" data-v="120">2h</div>
-            <div class="duration-item" data-v="180">3h</div>
-            <div class="duration-item" data-v="0">不限</div>
-            <div class="duration-item" data-v="custom">自定义</div>
+        <div class="segmented-control" id="durationSelector">
+            <div class="control-item" data-v="5">5m</div>
+            <div class="control-item active" data-v="20">20m</div>
+            <div class="control-item" data-v="60">1h</div>
+            <div class="control-item" data-v="0">不限时长</div>
+            <div class="control-item" data-v="custom">自定义</div>
         </div>
 
         <div id="customDurationBox">
             <input type="number" id="customMinutesInput" placeholder="请输入自定义分钟数" min="1" max="1440">
         </div>
 
-        <button id="generateBtn">发起投屏</button>
+        <button id="generateBtn" style="margin-top: 5px;">发起投屏</button>
         <div id="status">准备就绪</div>
 
         <div id="shareInfo">
@@ -341,22 +302,25 @@
         };
         let selectedQuality = "standard";
 
-        // 清晰度选择切换逻辑
-        document.querySelectorAll('.quality-item').forEach(item => {
+        // 清晰度选择逻辑
+        document.querySelectorAll('#qualitySelector .control-item').forEach(item => {
             item.onclick = () => {
-                if (document.getElementById('generateBtn').disabled) return; // 分享中不可切换
-                document.querySelectorAll('.quality-item').forEach(i => i.classList.remove('active'));
+                if (document.getElementById('generateBtn').disabled) return;
+                document.querySelectorAll('#qualitySelector .control-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 selectedQuality = item.getAttribute('data-q');
+                
+                // 性能提醒
+                document.getElementById('perfHint').style.display = (selectedQuality === 'pro_2k') ? 'block' : 'none';
             };
         });
 
-        // 时长选择器逻辑
-        let selectedDuration = 20; // 默认 20 分钟
-        document.querySelectorAll('.duration-item').forEach(item => {
+        // 时长选择逻辑
+        let selectedDuration = 20;
+        document.querySelectorAll('#durationSelector .control-item').forEach(item => {
             item.onclick = () => {
                 if (document.getElementById('generateBtn').disabled) return;
-                document.querySelectorAll('.duration-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('#durationSelector .control-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 
                 const val = item.getAttribute('data-v');
@@ -393,16 +357,25 @@
 
                 // 应用选中的清晰度配置 (开启 detail 模式优化画质)
                 const config = QUALITY_CONFIGS[selectedQuality];
-                screenTrack = await AgoraRTC.createScreenVideoTrack({
-                    optimizationMode: "detail", // 优先保障文字细节
-                    encoderConfig: {
-                        width: config.width,
-                        height: config.height,
-                        frameRate: config.frameRate,
-                        bitrateMin: config.bitrateMin,
-                        bitrateMax: config.bitrateMax
-                    }
-                }, "auto");
+                
+                try {
+                    screenTrack = await AgoraRTC.createScreenVideoTrack({
+                        optimizationMode: "detail", // 优先保障文字细节
+                        encoderConfig: {
+                            width: config.width,
+                            height: config.height,
+                            frameRate: config.frameRate,
+                            bitrateMin: config.bitrateMin,
+                            bitrateMax: config.bitrateMax
+                        }
+                    }, "auto");
+                } catch (trackError) {
+                    console.error("Track Error:", trackError);
+                    let msg = "权限请求失败";
+                    if (trackError.code === "PERMISSION_DENIED") msg = "未获得屏幕共享权限，请点击允许";
+                    else if (trackError.message?.includes("Could not get display media")) msg = "浏览器由于硬件压力或安全策略拒绝了请求";
+                    throw new Error(msg);
+                }
 
                 await client.join(APP_ID, channel, null, "sharer");
                 await client.publish(screenTrack);
@@ -506,16 +479,34 @@
                     window.location.reload();
                 });
 
-            } catch (e) {
-                console.error(e);
+            } catch (err) {
+                console.error("Share Error:", err);
+                status.innerText = `🔴 分享失败: ${err.message || '系统繁忙，请刷新再试'}`;
                 btn.disabled = false;
-                status.innerText = "准备就绪";
-                if (e.code === "PERMISSION_DENIED") {
-                    alert("用户取消了屏幕共享或未授权");
-                } else {
-                    alert("启动失败请检查：\n1. iPhone 镜像是否已打开并出画面\n2. 浏览器弹出选择时是否选了 iPhone 窗口\n" + e.message);
+                if (screenTrack) {
+                    screenTrack.stop();
+                    screenTrack.close();
                 }
+                if (client) await client.leave().catch(() => {});
             }
+        };
+
+        // 统一资源回收逻辑
+        async function cleanup() {
+            if (screenTrack) {
+                screenTrack.stop();
+                screenTrack.close();
+                screenTrack = null;
+            }
+            if (client) {
+                await client.leave().catch(() => {});
+                client = null;
+            }
+        }
+
+        // 页面关闭/刷新前强制释放资源，防止崩溃或僵尸流
+        window.onbeforeunload = () => {
+            cleanup();
         };
     </script>
 </body>
