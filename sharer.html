@@ -154,6 +154,30 @@
         .tag-visits { background: rgba(255, 55, 95, 0.15); color: #ff375f; font-weight: bold; }
         .tag-net { background: rgba(52, 199, 89, 0.15); color: #34c759; }
         .tag-res { background: rgba(255, 159, 10, 0.15); color: #ff9f0a; }
+
+        /* 清晰度选择器样式 */
+        .quality-selector {
+            display: flex;
+            background: #2c2c2e;
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .quality-item {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 9px;
+            color: #8e8e93;
+            transition: 0.2s;
+        }
+        .quality-item.active {
+            background: #3a3a3c;
+            color: #007aff;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -168,6 +192,30 @@
                 <li>在弹窗中切换到 <b>"Chrome 标签页"</b>、<b>"窗口"</b> 或 <b>"整个屏幕"</b>。</li>
                 <li>选择您想分享的内容并点击 <b>"分享"</b> 即可开始。</li>
             </ol>
+        </div>
+
+        <div class="quality-selector" id="qualitySelector">
+            <div class="quality-item" data-q="fluent">540P 流畅</div>
+            <div class="quality-item active" data-q="standard">720P 标清</div>
+            <div class="quality-item" data-q="high">1080P 高清</div>
+        </div>
+
+        <div style="margin-bottom: 25px; text-align: left;">
+            <label style="font-size: 13px; color: #8e8e93; margin-bottom: 8px; display: block;">分享时长限制</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="durationSelect" style="flex: 1; padding: 10px; background: #2c2c2e; border: none; color: #fff; border-radius: 10px; font-size: 14px; outline: none; cursor: pointer;">
+                    <option value="5">5 分钟</option>
+                    <option value="10">10 分钟</option>
+                    <option value="20">20 分钟</option>
+                    <option value="30" selected>30 分钟 (建议)</option>
+                    <option value="60">60 分钟</option>
+                    <option value="120">120 分钟</option>
+                    <option value="180">180 分钟</option>
+                    <option value="0">不限时</option>
+                    <option value="custom">手动填写...</option>
+                </select>
+                <input type="number" id="customMinutes" placeholder="分钟" min="1" max="1440" style="display: none; width: 80px; padding: 9px; background: #1c1c1e; border: 1px solid #3a3a3c; color: #fff; border-radius: 8px; font-size: 14px; outline: none;">
+            </div>
         </div>
 
         <button id="generateBtn">发起投屏</button>
@@ -193,6 +241,31 @@
         const APP_ID = "15b593b2d51e4017bc1c684201630356";
         let client, screenTrack;
 
+        // 清晰度配置项
+        const QUALITY_CONFIGS = {
+            fluent: { width: 960, height: 540, frameRate: 15, bitrate: 1000 },
+            standard: { width: 1280, height: 720, frameRate: 25, bitrate: 2000 },
+            high: { width: 1920, height: 1080, frameRate: 30, bitrate: 4000 }
+        };
+        let selectedQuality = "standard";
+
+        // 清晰度选择切换逻辑
+        document.querySelectorAll('.quality-item').forEach(item => {
+            item.onclick = () => {
+                if (document.getElementById('generateBtn').disabled) return; // 分享中不可切换
+                document.querySelectorAll('.quality-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                selectedQuality = item.getAttribute('data-q');
+            };
+        });
+
+        // 时长选择逻辑
+        const durationSelect = document.getElementById('durationSelect');
+        const customMinutes = document.getElementById('customMinutes');
+        durationSelect.onchange = () => {
+            customMinutes.style.display = durationSelect.value === 'custom' ? 'block' : 'none';
+        };
+
         document.getElementById('generateBtn').onclick = async () => {
             const btn = document.getElementById('generateBtn');
             const status = document.getElementById('status');
@@ -214,8 +287,15 @@
 
                 client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
                 
+                // 应用选中的清晰度配置
+                const config = QUALITY_CONFIGS[selectedQuality];
                 screenTrack = await AgoraRTC.createScreenVideoTrack({
-                    encoderConfig: { width: 1280, height: 720, frameRate: 25, bitrate: 2000 }
+                    encoderConfig: { 
+                        width: config.width, 
+                        height: config.height, 
+                        frameRate: config.frameRate, 
+                        bitrate: config.bitrate 
+                    }
                 }, "auto");
 
                 await client.join(APP_ID, channel, null, "sharer");
@@ -231,6 +311,31 @@
                 document.getElementById('viewerList').style.display = 'block';
                 
                 status.innerText = "🟢 分享中 - 请勿关闭此页面";
+                
+                // ===== 倒计时逻辑 =====
+                let limitMinutes = 0;
+                if (durationSelect.value === 'custom') {
+                    limitMinutes = parseInt(customMinutes.value) || 30;
+                } else {
+                    limitMinutes = parseInt(durationSelect.value);
+                }
+
+                if (limitMinutes > 0) {
+                    let totalSeconds = limitMinutes * 60;
+                    const timer = setInterval(() => {
+                        totalSeconds--;
+                        if (totalSeconds <= 0) {
+                            clearInterval(timer);
+                            alert("分享时间已到，投屏已自动结束。");
+                            window.location.reload();
+                        }
+                        const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+                        const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+                        const s = String(totalSeconds % 60).padStart(2, '0');
+                        status.innerText = `🟢 分享中 - 剩余时间 ${h}:${m}:${s}`;
+                    }, 1000);
+                }
+
                 btn.innerText = "修改分享 (需停止)";
                 btn.onclick = () => window.location.reload();
                 btn.disabled = false;
