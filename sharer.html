@@ -208,6 +208,56 @@
             color: #007aff;
             font-weight: 600;
         }
+        /* 时长选择器样式 */
+        .duration-row {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .duration-row:last-of-type {
+            margin-bottom: 20px;
+        }
+
+        .duration-item {
+            flex: 0 0 calc(20% - 6px);
+            padding: 8px 0;
+            background: #2c2c2e;
+            text-align: center;
+            font-size: 11px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #8e8e93;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            box-sizing: border-box;
+        }
+
+        .duration-item.active {
+            background: #3a3a3c;
+            color: #007aff;
+            border-color: rgba(0, 122, 255, 0.3);
+            font-weight: 600;
+        }
+
+        #customDurationBox {
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        #customDurationBox input {
+            width: 100%;
+            padding: 12px;
+            background: #1c1c1e;
+            border: 1px solid #3a3a3c;
+            color: #fff;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+            box-sizing: border-box;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -230,24 +280,25 @@
             <div class="quality-item" data-q="high">1080P 高清</div>
         </div>
 
-        <div style="margin-bottom: 25px; text-align: left;">
-            <label style="font-size: 13px; color: #8e8e93; margin-bottom: 8px; display: block;">分享时长限制</label>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <select id="durationSelect"
-                    style="flex: 1; padding: 10px; background: #2c2c2e; border: none; color: #fff; border-radius: 10px; font-size: 14px; outline: none; cursor: pointer;">
-                    <option value="5">5 分钟</option>
-                    <option value="10">10 分钟</option>
-                    <option value="20">20 分钟</option>
-                    <option value="30" selected>30 分钟</option>
-                    <option value="60">60 分钟</option>
-                    <option value="120">120 分钟</option>
-                    <option value="180">180 分钟</option>
-                    <option value="0">不限时</option>
-                    <option value="custom">手动填写...</option>
-                </select>
-                <input type="number" id="customMinutes" placeholder="分钟" min="1" max="1440"
-                    style="display: none; width: 80px; padding: 9px; background: #1c1c1e; border: 1px solid #3a3a3c; color: #fff; border-radius: 8px; font-size: 14px; outline: none;">
-            </div>
+        <div style="text-align: left; margin-bottom: 8px;">
+            <label style="font-size: 13px; color: #8e8e93;">分享时长限制</label>
+        </div>
+        <div class="duration-row">
+            <div class="duration-item" data-v="5">5m</div>
+            <div class="duration-item" data-v="10">10m</div>
+            <div class="duration-item active" data-v="20">20m</div>
+            <div class="duration-item" data-v="30">30m</div>
+        </div>
+        <div class="duration-row">
+            <div class="duration-item" data-v="60">1h</div>
+            <div class="duration-item" data-v="120">2h</div>
+            <div class="duration-item" data-v="180">3h</div>
+            <div class="duration-item" data-v="0">不限</div>
+            <div class="duration-item" data-v="custom">自定义</div>
+        </div>
+
+        <div id="customDurationBox">
+            <input type="number" id="customMinutesInput" placeholder="请输入自定义分钟数" min="1" max="1440">
         </div>
 
         <button id="generateBtn">发起投屏</button>
@@ -292,12 +343,24 @@
             };
         });
 
-        // 时长选择逻辑
-        const durationSelect = document.getElementById('durationSelect');
-        const customMinutes = document.getElementById('customMinutes');
-        durationSelect.onchange = () => {
-            customMinutes.style.display = durationSelect.value === 'custom' ? 'block' : 'none';
-        };
+        // 时长选择器逻辑
+        let selectedDuration = 20; // 默认 20 分钟
+        document.querySelectorAll('.duration-item').forEach(item => {
+            item.onclick = () => {
+                if (document.getElementById('generateBtn').disabled) return;
+                document.querySelectorAll('.duration-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                const val = item.getAttribute('data-v');
+                if (val === 'custom') {
+                    document.getElementById('customDurationBox').style.display = 'block';
+                    selectedDuration = -1;
+                } else {
+                    document.getElementById('customDurationBox').style.display = 'none';
+                    selectedDuration = parseInt(val);
+                }
+            };
+        });
 
         document.getElementById('generateBtn').onclick = async () => {
             const btn = document.getElementById('generateBtn');
@@ -347,10 +410,10 @@
 
                 // ===== 倒计时逻辑 =====
                 let limitMinutes = 0;
-                if (durationSelect.value === 'custom') {
-                    limitMinutes = parseInt(customMinutes.value) || 30;
+                if (selectedDuration === -1) {
+                    limitMinutes = parseInt(document.getElementById('customMinutesInput').value) || 30;
                 } else {
-                    limitMinutes = parseInt(durationSelect.value);
+                    limitMinutes = selectedDuration;
                 }
 
                 if (limitMinutes > 0) {
