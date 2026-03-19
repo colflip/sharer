@@ -185,27 +185,28 @@
 
         /* 清晰度选择器样式 */
         .quality-selector {
-            display: flex;
-            background: #2c2c2e;
-            padding: 4px;
-            border-radius: 12px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
             margin-bottom: 20px;
         }
 
         .quality-item {
-            flex: 1;
-            padding: 10px;
+            padding: 10px 0;
             text-align: center;
-            font-size: 13px;
+            font-size: 11px;
             cursor: pointer;
             border-radius: 9px;
+            background: #2c2c2e;
             color: #8e8e93;
             transition: 0.2s;
+            border: 1px solid transparent;
         }
 
         .quality-item.active {
             background: #3a3a3c;
             color: #007aff;
+            border-color: rgba(0, 122, 255, 0.3);
             font-weight: 600;
         }
         /* 时长选择器样式 */
@@ -274,10 +275,15 @@
             </ol>
         </div>
 
+        <div style="text-align: left; margin-bottom: 8px;">
+            <label style="font-size: 13px; color: #8e8e93;">清晰度选择</label>
+        </div>
         <div class="quality-selector" id="qualitySelector">
-            <div class="quality-item" data-q="fluent">540P 流畅</div>
-            <div class="quality-item active" data-q="standard">720P 标清</div>
-            <div class="quality-item" data-q="high">1080P 高清</div>
+            <div class="quality-item" data-q="fluent">540P</div>
+            <div class="quality-item active" data-q="standard">720P</div>
+            <div class="quality-item" data-q="high">1080P</div>
+            <div class="quality-item" data-q="ultra">极清</div>
+            <div class="quality-item" data-q="pro_2k">2K</div>
         </div>
 
         <div style="text-align: left; margin-bottom: 8px;">
@@ -325,11 +331,13 @@
         const APP_ID = "15b593b2d51e4017bc1c684201630356";
         let client, screenTrack;
 
-        // 清晰度配置项
+        // 清晰度配置项 (升级版)
         const QUALITY_CONFIGS = {
-            fluent: { width: 960, height: 540, frameRate: 15, bitrate: 1000 },
-            standard: { width: 1280, height: 720, frameRate: 25, bitrate: 2000 },
-            high: { width: 1920, height: 1080, frameRate: 30, bitrate: 4000 }
+            fluent: { width: 960, height: 540, frameRate: 15, bitrateMin: 500, bitrateMax: 1000 },
+            standard: { width: 1280, height: 720, frameRate: 25, bitrateMin: 800, bitrateMax: 2000 },
+            high: { width: 1920, height: 1080, frameRate: 30, bitrateMin: 1500, bitrateMax: 4000 },
+            ultra: { width: 1920, height: 1080, frameRate: 60, bitrateMin: 2000, bitrateMax: 8000 },
+            pro_2k: { width: 2560, height: 1440, frameRate: 30, bitrateMin: 3000, bitrateMax: 10000 }
         };
         let selectedQuality = "standard";
 
@@ -383,14 +391,16 @@
 
                 client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-                // 应用选中的清晰度配置
+                // 应用选中的清晰度配置 (开启 detail 模式优化画质)
                 const config = QUALITY_CONFIGS[selectedQuality];
                 screenTrack = await AgoraRTC.createScreenVideoTrack({
+                    optimizationMode: "detail", // 优先保障文字细节
                     encoderConfig: {
                         width: config.width,
                         height: config.height,
                         frameRate: config.frameRate,
-                        bitrate: config.bitrate
+                        bitrateMin: config.bitrateMin,
+                        bitrateMax: config.bitrateMax
                     }
                 }, "auto");
 
