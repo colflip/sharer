@@ -189,14 +189,14 @@
         }
 
         // 4 位邀请码自动进入逻辑
-        document.getElementById('password').addEventListener('input', function() {
+        document.getElementById('pwdInput').addEventListener('input', function() {
             if (this.value.length === 4) {
-                document.getElementById('joinBtn').click();
+                document.getElementById('enterBtn').click();
             }
         });
 
-        document.getElementById('joinBtn').onclick = async () => {
-            const pwd = document.getElementById('password').value.trim();
+        document.getElementById('enterBtn').onclick = async () => {
+            const pwd = document.getElementById('pwdInput').value.trim();
             const errorMsg = document.getElementById('error-msg');
 
             if (pwd.length !== 4) {
