@@ -23,10 +23,13 @@
             background: #1e1e1e;
             padding: 30px;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
-        h2 { margin-bottom: 30px; color: #007aff; }
+        h2 {
+            margin-bottom: 30px;
+            color: #007aff;
+        }
 
         .guide {
             text-align: left;
@@ -39,7 +42,9 @@
             color: #ccc;
         }
 
-        .guide b { color: #fff; }
+        .guide b {
+            color: #fff;
+        }
 
         #generateBtn {
             width: 100%;
@@ -54,7 +59,9 @@
             transition: 0.2s;
         }
 
-        #generateBtn:hover { background: #0056b3; }
+        #generateBtn:hover {
+            background: #0056b3;
+        }
 
         #shareInfo {
             display: none;
@@ -86,6 +93,7 @@
             font-size: 14px;
             color: #8e8e93;
         }
+
         .viewer-panel {
             margin-top: 20px;
             padding: 15px;
@@ -109,11 +117,15 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            overflow-x: auto; /* 支持横向滚动查看更多标签 */
-            scrollbar-width: none; /* 隐藏滚动条 */
+            overflow-x: auto;
+            /* 支持横向滚动查看更多标签 */
+            scrollbar-width: none;
+            /* 隐藏滚动条 */
         }
-        
-        .viewer-item::-webkit-scrollbar { display: none; }
+
+        .viewer-item::-webkit-scrollbar {
+            display: none;
+        }
 
         .viewer-item:last-child {
             border-bottom: none;
@@ -150,10 +162,26 @@
             white-space: nowrap;
         }
 
-        .tag-uid { background: rgba(0, 122, 255, 0.15); color: #007aff; }
-        .tag-visits { background: rgba(255, 55, 95, 0.15); color: #ff375f; font-weight: bold; }
-        .tag-net { background: rgba(52, 199, 89, 0.15); color: #34c759; }
-        .tag-res { background: rgba(255, 159, 10, 0.15); color: #ff9f0a; }
+        .tag-uid {
+            background: rgba(0, 122, 255, 0.15);
+            color: #007aff;
+        }
+
+        .tag-visits {
+            background: rgba(255, 55, 95, 0.15);
+            color: #ff375f;
+            font-weight: bold;
+        }
+
+        .tag-net {
+            background: rgba(52, 199, 89, 0.15);
+            color: #34c759;
+        }
+
+        .tag-res {
+            background: rgba(255, 159, 10, 0.15);
+            color: #ff9f0a;
+        }
 
         /* 清晰度选择器样式 */
         .quality-selector {
@@ -163,6 +191,7 @@
             border-radius: 12px;
             margin-bottom: 20px;
         }
+
         .quality-item {
             flex: 1;
             padding: 10px;
@@ -173,6 +202,7 @@
             color: #8e8e93;
             transition: 0.2s;
         }
+
         .quality-item.active {
             background: #3a3a3c;
             color: #007aff;
@@ -184,7 +214,7 @@
 <body>
     <div class="container">
         <h2>ScreenCast <span style="font-size: 16px; color: #8e8e93; font-weight: normal;">| 极简投屏</span></h2>
-        
+
         <div class="guide" style="background: transparent; padding: 0; margin-bottom: 30px; text-align: left;">
             <p style="color: #fff; font-size: 15px; margin-top: 0; margin-bottom: 12px; font-weight: 500;">操作指引：</p>
             <ol style="color: #8e8e93; font-size: 14px; margin: 0; padding-left: 20px; line-height: 1.6;">
@@ -203,18 +233,20 @@
         <div style="margin-bottom: 25px; text-align: left;">
             <label style="font-size: 13px; color: #8e8e93; margin-bottom: 8px; display: block;">分享时长限制</label>
             <div style="display: flex; gap: 10px; align-items: center;">
-                <select id="durationSelect" style="flex: 1; padding: 10px; background: #2c2c2e; border: none; color: #fff; border-radius: 10px; font-size: 14px; outline: none; cursor: pointer;">
+                <select id="durationSelect"
+                    style="flex: 1; padding: 10px; background: #2c2c2e; border: none; color: #fff; border-radius: 10px; font-size: 14px; outline: none; cursor: pointer;">
                     <option value="5">5 分钟</option>
                     <option value="10">10 分钟</option>
                     <option value="20">20 分钟</option>
-                    <option value="30" selected>30 分钟 (建议)</option>
+                    <option value="30" selected>30 分钟</option>
                     <option value="60">60 分钟</option>
                     <option value="120">120 分钟</option>
                     <option value="180">180 分钟</option>
                     <option value="0">不限时</option>
                     <option value="custom">手动填写...</option>
                 </select>
-                <input type="number" id="customMinutes" placeholder="分钟" min="1" max="1440" style="display: none; width: 80px; padding: 9px; background: #1c1c1e; border: 1px solid #3a3a3c; color: #fff; border-radius: 8px; font-size: 14px; outline: none;">
+                <input type="number" id="customMinutes" placeholder="分钟" min="1" max="1440"
+                    style="display: none; width: 80px; padding: 9px; background: #1c1c1e; border: 1px solid #3a3a3c; color: #fff; border-radius: 8px; font-size: 14px; outline: none;">
             </div>
         </div>
 
@@ -224,7 +256,8 @@
         <div id="shareInfo">
             <div class="info-card">
                 <p style="margin:0 0 10px 0; color:#34c759; font-weight:bold;">✅ 分享已开启</p>
-                <div id="urlContainer" style="font-size:14px; background:#111; padding:10px; border-radius:6px; margin-bottom:10px;"></div>
+                <div id="urlContainer"
+                    style="font-size:14px; background:#111; padding:10px; border-radius:6px; margin-bottom:10px;"></div>
                 <p style="margin:5px 0;">密码：<b id="pwdCode" style="font-size:24px; color:#fff;"></b></p>
                 <button class="copy-btn" id="copyUrl">复制完整信息</button>
             </div>
@@ -269,7 +302,7 @@
         document.getElementById('generateBtn').onclick = async () => {
             const btn = document.getElementById('generateBtn');
             const status = document.getElementById('status');
-            
+
             // 环境检测：防止用户在本地打开文件时生成错误的本地链接
             if (window.location.protocol === 'file:') {
                 alert("🔴 检测到您正在打开本地文件！\n\n请先访问您部署在 Render 的域名地址（例如 https://xxx.onrender.com/sharer.html），从线上页面点击分享，否则生成的链接别人无法打开。");
@@ -286,15 +319,15 @@
                 status.innerText = "正在请求共享权限...";
 
                 client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-                
+
                 // 应用选中的清晰度配置
                 const config = QUALITY_CONFIGS[selectedQuality];
                 screenTrack = await AgoraRTC.createScreenVideoTrack({
-                    encoderConfig: { 
-                        width: config.width, 
-                        height: config.height, 
-                        frameRate: config.frameRate, 
-                        bitrate: config.bitrate 
+                    encoderConfig: {
+                        width: config.width,
+                        height: config.height,
+                        frameRate: config.frameRate,
+                        bitrate: config.bitrate
                     }
                 }, "auto");
 
@@ -304,14 +337,14 @@
                 // 生成观看链接 (自适应当前部署域名，全网通用)
                 const baseUrl = window.location.origin + window.location.pathname.replace('sharer.html', '');
                 const watchUrl = `${baseUrl}index.html#room=${roomId}`;
-                
+
                 document.getElementById('urlContainer').innerText = watchUrl;
                 document.getElementById('pwdCode').innerText = password;
                 document.getElementById('shareInfo').style.display = 'block';
                 document.getElementById('viewerList').style.display = 'block';
-                
+
                 status.innerText = "🟢 分享中 - 请勿关闭此页面";
-                
+
                 // ===== 倒计时逻辑 =====
                 let limitMinutes = 0;
                 if (durationSelect.value === 'custom') {
@@ -352,7 +385,7 @@
                 client.on("user-joined", (user) => {
                     // 如果 UID 不是通过我们特定编码格式传入的，则跳过
                     if (typeof user.uid !== 'string' || !user.uid.startsWith("viewer|")) return;
-                    
+
                     const p = user.uid.split("|");
                     // 格式: viewer|osBrowser|res|dpr|net|lang|theme|uid|fingerprint|visits
                     const info = {
@@ -366,7 +399,7 @@
                         fp: p[8] || "N/A",
                         visits: p[9] || "1"
                     };
-                    
+
                     const el = document.createElement("div");
                     el.className = "viewer-item";
                     el.id = `viewer-${user.uid}`;
@@ -385,7 +418,7 @@
                             <span class="tag" title="指纹: ${info.fp}">FP: ${info.fp}</span>
                         </div>
                     `;
-                    
+
                     viewersContainer.appendChild(el);
                 });
 
@@ -394,7 +427,7 @@
                     const el = document.getElementById(`viewer-${user.uid}`);
                     if (el) el.remove();
                 });
-                
+
                 // 监听停止共享（点击浏览器顶部的停止或关闭窗口）
                 screenTrack.on("track-ended", () => {
                     window.location.reload();
