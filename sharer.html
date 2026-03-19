@@ -251,7 +251,7 @@
             <p style="color: #fff; font-size: 15px; margin-top: 0; margin-bottom: 16px; font-weight: 500;">操作指引：</p>
             <ol style="color: #8e8e93; font-size: 14px; margin: 0; padding-left: 20px; line-height: 1.8;">
                 <li>点击下方按钮，浏览器会自动弹出窗口选择列表。</li>
-                <li>在弹窗中切换到 <b>"Chrome 标签页"</b>、<b>"窗口"</b> 或 <b>"整个屏幕"</b>。</li>
+                <li>在弹窗中切换到 <b>"标签页"</b>、<b>"窗口"</b> 或 <b>"整个屏幕"</b>。</li>
                 <li>选择您想分享的内容并点击 <b>"分享"</b> 即可开始。</li>
             </ol>
         </div>
@@ -355,8 +355,8 @@
                     selectedDuration = parseInt(val);
                 }
 
-                // 如果正在投屏，动态更新剩余时长
-                if (countdownTimer) {
+                // 如果正在投屏，动态更新/开启剩余时长
+                if (client && client.connectionState === "CONNECTED") {
                     let newLimit = 0;
                     if (selectedDuration === -1) {
                         newLimit = parseInt(document.getElementById('customMinutesInput').value) || 30;
@@ -366,16 +366,39 @@
                     
                     if (newLimit > 0) {
                         totalSecondsRemaining = newLimit * 60;
+                        if (!countdownTimer) {
+                            startCountdown(); // 重新启动计时器
+                        }
                         console.log("时长已动态调整为:", newLimit, "分钟");
                     } else {
                         // 不限时长，清除定时器
-                        clearInterval(countdownTimer);
-                        countdownTimer = null;
+                        if (countdownTimer) {
+                            clearInterval(countdownTimer);
+                            countdownTimer = null;
+                        }
                         document.getElementById('status').innerText = "🟢 分享中 - 不限时长";
                     }
                 }
             };
         });
+
+        // 封装倒计时启动逻辑
+        function startCountdown() {
+            if (countdownTimer) clearInterval(countdownTimer);
+            countdownTimer = setInterval(() => {
+                totalSecondsRemaining--;
+                if (totalSecondsRemaining <= 0) {
+                    clearInterval(countdownTimer);
+                    countdownTimer = null;
+                    alert("分享时间已到，投屏已自动结束。");
+                    window.location.reload();
+                }
+                const h = String(Math.floor(totalSecondsRemaining / 3600)).padStart(2, '0');
+                const m = String(Math.floor((totalSecondsRemaining % 3600) / 60)).padStart(2, '0');
+                const s = String(totalSecondsRemaining % 60).padStart(2, '0');
+                document.getElementById('status').innerText = `🟢 分享中 - 剩余时间 ${h}:${m}:${s}`;
+            }, 1000);
+        }
 
         // 自定义时长输入动态更新逻辑
         document.getElementById('customMinutesInput').addEventListener('input', function() {
@@ -454,21 +477,7 @@
 
                 if (limitMinutes > 0) {
                     totalSecondsRemaining = limitMinutes * 60;
-                    if (countdownTimer) clearInterval(countdownTimer);
-                    
-                    countdownTimer = setInterval(() => {
-                        totalSecondsRemaining--;
-                        if (totalSecondsRemaining <= 0) {
-                            clearInterval(countdownTimer);
-                            countdownTimer = null;
-                            alert("分享时间已到，投屏已自动结束。");
-                            window.location.reload();
-                        }
-                        const h = String(Math.floor(totalSecondsRemaining / 3600)).padStart(2, '0');
-                        const m = String(Math.floor((totalSecondsRemaining % 3600) / 60)).padStart(2, '0');
-                        const s = String(totalSecondsRemaining % 60).padStart(2, '0');
-                        document.getElementById('status').innerText = `🟢 分享中 - 剩余时间 ${h}:${m}:${s}`;
-                    }, 1000);
+                    startCountdown();
                 } else {
                     document.getElementById('status').innerText = "🟢 分享中 - 不限时长";
                 }
