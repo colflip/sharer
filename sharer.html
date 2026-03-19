@@ -103,54 +103,57 @@
         }
 
         .viewer-item {
-            font-size: 13px;
-            padding: 12px;
+            font-size: 12px;
+            padding: 10px 15px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            align-items: center;
+            gap: 10px;
+            overflow-x: auto; /* 支持横向滚动查看更多标签 */
+            scrollbar-width: none; /* 隐藏滚动条 */
         }
         
+        .viewer-item::-webkit-scrollbar { display: none; }
+
         .viewer-item:last-child {
             border-bottom: none;
-        }
-
-        .viewer-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
         }
 
         .viewer-main {
             display: flex;
             align-items: center;
+            flex-shrink: 0;
+            margin-right: 5px;
         }
 
         .viewer-item .dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: #34c759;
-            margin-right: 10px;
+            margin-right: 8px;
         }
 
         .viewer-details {
             display: flex;
-            flex-wrap: wrap;
+            align-items: center;
             gap: 6px;
+            flex-shrink: 0;
         }
 
         .tag {
             padding: 2px 6px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 4px;
-            font-size: 11px;
-            color: #aaa;
+            font-size: 10px;
+            color: #999;
+            white-space: nowrap;
         }
 
-        .tag-uid { background: rgba(0, 122, 255, 0.2); color: #007aff; }
-        .tag-net { background: rgba(52, 199, 89, 0.2); color: #34c759; }
-        .tag-res { background: rgba(255, 159, 10, 0.2); color: #ff9f0a; }
+        .tag-uid { background: rgba(0, 122, 255, 0.15); color: #007aff; }
+        .tag-visits { background: rgba(255, 55, 95, 0.15); color: #ff375f; font-weight: bold; }
+        .tag-net { background: rgba(52, 199, 89, 0.15); color: #34c759; }
+        .tag-res { background: rgba(255, 159, 10, 0.15); color: #ff9f0a; }
     </style>
 </head>
 
@@ -246,35 +249,35 @@
                     if (typeof user.uid !== 'string' || !user.uid.startsWith("viewer|")) return;
                     
                     const p = user.uid.split("|");
-                    // 格式: viewer|osBrowser|res|dpr|net|lang|theme|uid|fingerprint
+                    // 格式: viewer|osBrowser|res|dpr|net|lang|theme|uid|fingerprint|visits
                     const info = {
-                        osBrowser: p[1] || "未知设备",
-                        res: p[2] || "未知分辨率",
+                        osBrowser: p[1] || "未知",
+                        res: p[2] || "未知",
                         dpr: p[3] || "1",
-                        net: p[4] || "未知网络",
+                        net: p[4] || "未知",
                         lang: p[5] || "zh",
                         theme: p[6] || "light",
                         uid: p[7] || "N/A",
-                        fp: p[8] || "N/A"
+                        fp: p[8] || "N/A",
+                        visits: p[9] || "1"
                     };
                     
                     const el = document.createElement("div");
                     el.className = "viewer-item";
                     el.id = `viewer-${user.uid}`;
                     el.innerHTML = `
-                        <div class="viewer-header">
-                            <div class="viewer-main">
-                                <div class="dot"></div>
-                                <b style="color:#fff;">${info.osBrowser}</b>
-                            </div>
-                            <span class="tag tag-uid" title="持久化唯一标识">UID: ${info.uid}</span>
+                        <div class="viewer-main">
+                            <div class="dot"></div>
+                            <b style="color:#fff; margin-right:5px;">${info.osBrowser}</b>
                         </div>
                         <div class="viewer-details">
-                            <span class="tag tag-res" title="屏幕分辨率">${info.res} @${info.dpr}x</span>
-                            <span class="tag tag-net" title="网络类型">${info.net.toUpperCase()}</span>
-                            <span class="tag" title="系统语言">${info.lang.toUpperCase()}</span>
-                            <span class="tag" title="主题偏好">${info.theme === 'dark' ? '🌙 深色' : '☀️ 浅色'}</span>
-                            <span class="tag" title="浏览器指纹 (简易哈希)">FP: ${info.fp}</span>
+                            <span class="tag tag-uid">ID: ${info.uid}</span>
+                            <span class="tag tag-visits">第 ${info.visits} 次访问</span>
+                            <span class="tag tag-res">${info.res} @${info.dpr}x</span>
+                            <span class="tag tag-net">${info.net.toUpperCase()}</span>
+                            <span class="tag">${info.lang.toUpperCase()}</span>
+                            <span class="tag">${info.theme === 'dark' ? '🌙' : '☀️'}</span>
+                            <span class="tag" title="指纹: ${info.fp}">FP: ${info.fp}</span>
                         </div>
                     `;
                     

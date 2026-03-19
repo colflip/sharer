@@ -147,12 +147,15 @@
             const lang = (navigator.language || "zh").split('-')[0]; // 取简码如 zh, en
             const theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
 
-            // 5. 持久化 Unique ID (存储在 localStorage)
+            // 5. 持久化 Unique ID 与 访问次数 (存储在 localStorage)
             let uid = localStorage.getItem('sc_uid');
             if (!uid) {
                 uid = Math.random().toString(36).substring(2, 8);
                 localStorage.setItem('sc_uid', uid);
             }
+            
+            let visits = parseInt(localStorage.getItem('sc_visits') || '0') + 1;
+            localStorage.setItem('sc_visits', visits.toString());
 
             // 6. 简易指纹 (UA + 分辨率 + 时区 + 语言)
             const fpData = `${ua}|${res}|${new Date().getTimezoneOffset()}|${lang}`;
@@ -163,7 +166,7 @@
             }
             const fingerprint = Math.abs(hash).toString(36);
 
-            return { osBrowser, res, dpr, net, lang, theme, uid, fingerprint };
+            return { osBrowser, res, dpr, net, lang, theme, uid, fingerprint, visits };
         }
 
         const APP_ID = "15b593b2d51e4017bc1c684201630356";
@@ -204,9 +207,9 @@
                 // 构造与分享端一致的频道名
                 const channel = `iosshare-${roomId}-${pwd}`;
                 
-                // 将增强的设备信息编码进 UID (格式: viewer|平台_浏览器|分辨率|DPR|网络|语言|主题|UID|指纹)
+                // 将增强的设备信息编码进 UID (格式: viewer|平台_浏览器|分辨率|DPR|网络|语言|主题|UID|指纹|访问次数)
                 const info = getExtendedDeviceInfo();
-                const viewerUid = `viewer|${info.osBrowser}|${info.res}|${info.dpr}|${info.net}|${info.lang}|${info.theme}|${info.uid}|${info.fingerprint}`;
+                const viewerUid = `viewer|${info.osBrowser}|${info.res}|${info.dpr}|${info.net}|${info.lang}|${info.theme}|${info.uid}|${info.fingerprint}|${info.visits}`;
 
                 await client.join(APP_ID, channel, null, viewerUid);
                 statusBar.innerText = "已进入房间，等待画面...";
