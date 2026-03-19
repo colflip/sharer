@@ -236,7 +236,7 @@
                 btn.disabled = false;
 
                 document.getElementById('copyUrl').onclick = () => {
-                    const text = `加入我的投屏：\n${watchUrl}\n\n入会密码：${password}`;
+                    const text = `使用浏览器打开，加入我的投屏：\n${watchUrl}\n\n邀请码：${password}`;
                     navigator.clipboard.writeText(text);
                     alert("邀请信息已复制");
                 };
