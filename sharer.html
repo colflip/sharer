@@ -15,14 +15,14 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px 20px;
+            padding: 20px 20px;
         }
 
         .container {
             width: 100%;
             max-width: 600px;
             background: #1c1c1e;
-            padding: 40px 40px;
+            padding: 25px 30px;
             border-radius: 24px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
             text-align: center;
@@ -30,7 +30,7 @@
 
         h2 {
             margin-top: 0;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
             font-size: 24px;
             letter-spacing: -0.5px;
             color: #007aff;
@@ -39,9 +39,9 @@
         .guide {
             text-align: left;
             background: #2c2c2e;
-            padding: 15px;
+            padding: 12px 15px;
             border-radius: 12px;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             font-size: 14px;
             line-height: 1.6;
             color: #ccc;
@@ -78,7 +78,7 @@
 
         #shareInfo {
             display: none;
-            margin-top: 30px;
+            margin-top: 15px;
             text-align: left;
             word-break: break-all;
         }
@@ -202,7 +202,7 @@
             background: rgba(255, 255, 255, 0.05);
             padding: 4px;
             border-radius: 14px;
-            margin-bottom: 24px;
+            margin-bottom: 10px;
             justify-content: center;
         }
 
@@ -225,7 +225,7 @@
         }
 
         #customDurationBox {
-            margin-bottom: 24px;
+            margin-bottom: 12px;
             display: none;
         }
 
@@ -248,9 +248,9 @@
     <div class="container">
         <h2>ScreenCast <span style="font-size: 16px; color: #8e8e93; font-weight: normal;">| 极简投屏</span></h2>
 
-        <div class="guide" style="background: transparent; padding: 0; margin-bottom: 40px; text-align: left;">
-            <p style="color: #fff; font-size: 15px; margin-top: 0; margin-bottom: 16px; font-weight: 500;">操作指引：</p>
-            <ol style="color: #8e8e93; font-size: 14px; margin: 0; padding-left: 20px; line-height: 1.8;">
+        <div class="guide" style="background: transparent; padding: 0; margin-bottom: 25px; text-align: left;">
+            <p style="color: #fff; font-size: 15px; margin-top: 0; margin-bottom: 10px; font-weight: 500;">操作指引：</p>
+            <ol style="color: #8e8e93; font-size: 14px; margin: 0; padding-left: 20px; line-height: 1.6;">
                 <li>点击下方按钮，浏览器会自动弹出窗口选择列表。</li>
                 <li>在弹窗中切换到 <b>"标签页"</b>、<b>"窗口"</b> 或 <b>"整个屏幕"</b>。</li>
                 <li>选择您想分享的内容并点击 <b>"分享"</b> 即可开始。</li>
@@ -459,7 +459,7 @@
 
                 // 生成观看链接 (自适应当前部署域名，全网通用)
                 const baseUrl = window.location.origin + window.location.pathname.replace('sharer.html', '');
-                const watchUrl = `${baseUrl}index.html#room=${roomId}`;
+                const watchUrl = `${baseUrl}index.html#room=${roomId}&pwd=${password}`;
 
                 document.getElementById('urlContainer').innerText = watchUrl;
                 document.getElementById('pwdCode').innerText = password;
@@ -492,7 +492,7 @@
                 btn.disabled = false;
 
                 document.getElementById('copyUrl').onclick = () => {
-                    const text = `使用浏览器打开，加入我的投屏：\n${watchUrl}\n\n邀请码：${password}`;
+                    const text = `使用浏览器打开，加入投屏：\n${watchUrl}`;
                     navigator.clipboard.writeText(text);
                     alert("邀请信息已复制");
                 };

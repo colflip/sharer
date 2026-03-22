@@ -265,8 +265,21 @@
             }
         };
 
-        // 自动聚焦
-        window.onload = () => document.getElementById('pwdInput').focus();
+        // 自动聚焦 & 自动登录
+        window.onload = () => {
+            const pwdInput = document.getElementById('pwdInput');
+            const urlPwd = getHashParam('pwd');
+            
+            if (urlPwd && urlPwd.length === 4) {
+                pwdInput.value = urlPwd;
+                // 延迟一小下确保 UI 已就绪（可选，但更稳健）
+                setTimeout(() => {
+                    document.getElementById('enterBtn').click();
+                }, 100);
+            } else {
+                pwdInput.focus();
+            }
+        };
     </script>
 </body>
 
