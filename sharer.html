@@ -15,14 +15,14 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px 20px;
+            padding: 30px 20px;
         }
 
         .container {
             width: 100%;
             max-width: 600px;
             background: #1c1c1e;
-            padding: 25px 30px;
+            padding: 35px 30px;
             border-radius: 24px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
             text-align: center;
@@ -30,7 +30,7 @@
 
         h2 {
             margin-top: 0;
-            margin-bottom: 15px;
+            margin-bottom: 25px;
             font-size: 24px;
             letter-spacing: -0.5px;
             color: #007aff;
@@ -41,7 +41,7 @@
             background: #2c2c2e;
             padding: 12px 15px;
             border-radius: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             font-size: 14px;
             line-height: 1.6;
             color: #ccc;
@@ -241,6 +241,116 @@
             box-sizing: border-box;
             text-align: center;
         }
+
+        .field-block {
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .field-block label {
+            display: block;
+            margin-bottom: 8px;
+            color: #8e8e93;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        #sharePromptInput {
+            width: 100%;
+            min-height: 68px;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        #sharePromptInput:focus {
+            border-color: #007aff;
+        }
+
+        #sharePromptInput:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .prompt-preview {
+            display: none;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 122, 255, 0.12);
+            border-radius: 8px;
+            color: #d8ecff;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .panel-header h3 {
+            margin: 0;
+        }
+
+        .mini-btn {
+            padding: 5px 9px;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: #8e8e93;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .record-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .record-item:last-child {
+            border-bottom: none;
+        }
+
+        .record-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .record-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .record-times {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .empty-state {
+            padding: 12px 0;
+            color: #636366;
+            font-size: 13px;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -249,8 +359,8 @@
         <h2>ScreenCast <span style="font-size: 16px; color: #8e8e93; font-weight: normal;">| 极简投屏</span></h2>
 
         <div class="guide" style="background: transparent; padding: 0; margin-bottom: 25px; text-align: left;">
-            <p style="color: #fff; font-size: 15px; margin-top: 0; margin-bottom: 10px; font-weight: 500;">操作指引：</p>
-            <ol style="color: #8e8e93; font-size: 14px; margin: 0; padding-left: 20px; line-height: 1.6;">
+            <p style="color: #fff; font-size: 15px; margin-top: 0; margin-bottom: 12px; font-weight: 500;">操作指引：</p>
+            <ol style="color: #8e8e93; font-size: 14px; margin: 0; padding-left: 20px; line-height: 1.75;">
                 <li>点击下方按钮，浏览器会自动弹出窗口选择列表。</li>
                 <li>在弹窗中切换到 <b>"标签页"</b>、<b>"窗口"</b> 或 <b>"整个屏幕"</b>。</li>
                 <li>选择您想分享的内容并点击 <b>"分享"</b> 即可开始。</li>
@@ -276,6 +386,11 @@
             <input type="number" id="customMinutesInput" placeholder="请输入自定义分钟数" min="1" max="1440">
         </div>
 
+        <div class="field-block">
+            <label for="sharePromptInput">分享链接提示语</label>
+            <textarea id="sharePromptInput" maxlength="120" placeholder="例如：请用手机浏览器打开，会议结束后可直接关闭页面。"></textarea>
+        </div>
+
         <button id="generateBtn" style="margin-top: 5px;">发起投屏</button>
         <div id="status">准备就绪</div>
 
@@ -285,6 +400,7 @@
                 <div id="urlContainer"
                     style="font-size:14px; background:#111; padding:10px; border-radius:6px; margin-bottom:10px;"></div>
                 <p style="margin:5px 0;">密码：<b id="pwdCode" style="font-size:24px; color:#fff;"></b></p>
+                <div id="promptPreview" class="prompt-preview"></div>
                 <button class="copy-btn" id="copyUrl">复制完整信息</button>
             </div>
         </div>
@@ -292,6 +408,14 @@
         <div id="viewerList" class="viewer-panel">
             <h3>实时访客状态</h3>
             <div id="viewersContainer"></div>
+        </div>
+
+        <div id="viewerRecordPanel" class="viewer-panel">
+            <div class="panel-header">
+                <h3>设备记录</h3>
+                <button class="mini-btn" id="clearRecordsBtn" type="button">清空</button>
+            </div>
+            <div id="recordsContainer"></div>
         </div>
     </div>
 
@@ -301,6 +425,190 @@
         let client, screenTrack;
         let countdownTimer = null; // 全局定时器引用
         let totalSecondsRemaining = 0; // 全局剩余秒数
+        const DEFAULT_SHARE_PROMPT = "请使用浏览器打开链接，参加投屏";
+        const SHARE_PROMPT_KEY = "sc_share_prompt";
+        const LAST_RECORDS_KEY = "sc_latest_viewer_records_key";
+        const VIEWER_RECORDS_CACHE_KEY = "sc_viewer_records_cache";
+        let currentRecordsKey = localStorage.getItem(LAST_RECORDS_KEY) || "";
+        let viewerRecords = [];
+        const activeViewerRecords = new Map();
+
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            }[char]));
+        }
+
+        function formatTime(value) {
+            if (!value) return "在线中";
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return "未知";
+            return date.toLocaleString("zh-CN", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false
+            }).replace(/\//g, "-");
+        }
+
+        function parseViewerInfo(viewerUid) {
+            const p = viewerUid.split("|");
+            return {
+                osBrowser: p[1] || "未知",
+                res: p[2] || "未知",
+                dpr: p[3] || "1",
+                net: p[4] || "未知",
+                lang: p[5] || "zh",
+                theme: p[6] || "light",
+                uid: p[7] || "N/A",
+                fp: p[8] || "N/A",
+                visits: p[9] || "1"
+            };
+        }
+
+        function buildInfoTags(info) {
+            const safeNet = escapeHtml(String(info.net || "unknown").toUpperCase());
+            const safeLang = escapeHtml(String(info.lang || "zh").toUpperCase());
+            return `
+                <span class="tag tag-uid">ID: ${escapeHtml(info.uid)}</span>
+                <span class="tag tag-visits">第 ${escapeHtml(info.visits)} 次访问</span>
+                <span class="tag tag-res">${escapeHtml(info.res)} @${escapeHtml(info.dpr)}x</span>
+                <span class="tag tag-net">${safeNet}</span>
+                <span class="tag">${safeLang}</span>
+                <span class="tag">${info.theme === 'dark' ? '🌙' : '☀️'}</span>
+                <span class="tag" title="指纹: ${escapeHtml(info.fp)}">FP: ${escapeHtml(info.fp)}</span>
+            `;
+        }
+
+        function saveViewerRecords() {
+            const cache = {
+                recordsKey: currentRecordsKey,
+                records: viewerRecords
+            };
+            localStorage.setItem(VIEWER_RECORDS_CACHE_KEY, JSON.stringify(cache));
+            if (!currentRecordsKey) return;
+            localStorage.setItem(currentRecordsKey, JSON.stringify(viewerRecords));
+            localStorage.setItem(LAST_RECORDS_KEY, currentRecordsKey);
+        }
+
+        function loadSavedViewerRecords() {
+            try {
+                let saved = [];
+                const cached = JSON.parse(localStorage.getItem(VIEWER_RECORDS_CACHE_KEY) || "null");
+                if (cached && Array.isArray(cached.records)) {
+                    saved = cached.records;
+                    if (!currentRecordsKey && cached.recordsKey) {
+                        currentRecordsKey = cached.recordsKey;
+                    }
+                } else if (currentRecordsKey) {
+                    saved = JSON.parse(localStorage.getItem(currentRecordsKey) || "[]");
+                }
+
+                if (Array.isArray(saved)) {
+                    viewerRecords = saved;
+                    renderViewerRecords();
+                }
+            } catch (err) {
+                console.warn("读取访客记录失败:", err);
+            }
+        }
+
+        function renderViewerRecords() {
+            const panel = document.getElementById("viewerRecordPanel");
+            const container = document.getElementById("recordsContainer");
+            if (!panel || !container) return;
+
+            if (!viewerRecords.length) {
+                container.innerHTML = '<div class="empty-state">暂无打开记录</div>';
+                panel.style.display = currentRecordsKey ? "block" : "none";
+                return;
+            }
+
+            panel.style.display = "block";
+            container.innerHTML = viewerRecords.slice().reverse().map((record) => {
+                const info = record.info || {};
+                return `
+                    <div class="record-item">
+                        <div class="record-title">
+                            <b style="color:#fff;">${escapeHtml(info.osBrowser || "未知设备")}</b>
+                            <span class="tag">${record.endedAt ? "已结束" : "在线中"}</span>
+                        </div>
+                        <div class="record-meta">${buildInfoTags(info)}</div>
+                        <div class="record-times">
+                            <span class="tag">打开: ${escapeHtml(formatTime(record.openedAt))}</span>
+                            <span class="tag">结束: ${escapeHtml(formatTime(record.endedAt))}</span>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function appendActiveViewer(record) {
+            const viewersContainer = document.getElementById('viewersContainer');
+            if (!viewersContainer) return;
+
+            const info = record.info;
+            const el = document.createElement("div");
+            el.className = "viewer-item";
+            el.id = `viewer-${record.id}`;
+            el.innerHTML = `
+                <div class="viewer-main">
+                    <div class="dot"></div>
+                    <b style="color:#fff; margin-right:5px;">${escapeHtml(info.osBrowser)}</b>
+                </div>
+                <div class="viewer-details">
+                    ${buildInfoTags(info)}
+                    <span class="tag">打开 ${escapeHtml(formatTime(record.openedAt))}</span>
+                </div>
+            `;
+
+            viewersContainer.appendChild(el);
+        }
+
+        function closeActiveViewerRecords() {
+            if (!activeViewerRecords.size) return;
+            const endedAt = new Date().toISOString();
+            activeViewerRecords.forEach((record) => {
+                if (!record.endedAt) record.endedAt = endedAt;
+                const el = document.getElementById(`viewer-${record.id}`);
+                if (el) el.remove();
+            });
+            activeViewerRecords.clear();
+            saveViewerRecords();
+            renderViewerRecords();
+        }
+
+        const sharePromptInput = document.getElementById('sharePromptInput');
+        const savedSharePrompt = localStorage.getItem(SHARE_PROMPT_KEY);
+        sharePromptInput.value = savedSharePrompt === null ? DEFAULT_SHARE_PROMPT : savedSharePrompt;
+        if (savedSharePrompt === null) {
+            localStorage.setItem(SHARE_PROMPT_KEY, DEFAULT_SHARE_PROMPT);
+        }
+        sharePromptInput.addEventListener('input', function() {
+            localStorage.setItem(SHARE_PROMPT_KEY, this.value);
+        });
+
+        loadSavedViewerRecords();
+
+        document.getElementById('clearRecordsBtn').onclick = () => {
+            viewerRecords = Array.from(activeViewerRecords.values());
+            if (viewerRecords.length) {
+                saveViewerRecords();
+            } else if (currentRecordsKey) {
+                localStorage.removeItem(currentRecordsKey);
+                localStorage.removeItem(LAST_RECORDS_KEY);
+                localStorage.removeItem(VIEWER_RECORDS_CACHE_KEY);
+                currentRecordsKey = "";
+            }
+            renderViewerRecords();
+        };
 
         // 清晰度配置项 (升级版)
         const QUALITY_CONFIGS = {
@@ -392,7 +700,8 @@
                     clearInterval(countdownTimer);
                     countdownTimer = null;
                     alert("分享时间已到，投屏已自动结束。");
-                    window.location.reload();
+                    cleanup().finally(() => window.location.reload());
+                    return;
                 }
                 const h = String(Math.floor(totalSecondsRemaining / 3600)).padStart(2, '0');
                 const m = String(Math.floor((totalSecondsRemaining % 3600) / 60)).padStart(2, '0');
@@ -425,6 +734,8 @@
             const password = String(Math.floor(1000 + Math.random() * 9000));
             const roomId = Math.random().toString(36).substring(7);
             const channel = `iosshare-${roomId}-${password}`;
+            const sharePrompt = document.getElementById('sharePromptInput').value.trim();
+            localStorage.setItem(SHARE_PROMPT_KEY, sharePrompt);
 
             try {
                 btn.disabled = true;
@@ -459,12 +770,29 @@
 
                 // 生成观看链接 (自适应当前部署域名，全网通用)
                 const baseUrl = window.location.origin + window.location.pathname.replace('sharer.html', '');
-                const watchUrl = `${baseUrl}index.html#room=${roomId}&pwd=${password}`;
+                const hashParams = new URLSearchParams({ room: roomId, pwd: password });
+                if (sharePrompt) hashParams.set("msg", sharePrompt);
+                const watchUrl = `${baseUrl}index.html#${hashParams.toString()}`;
+
+                currentRecordsKey = `sc_viewer_records_${roomId}_${password}`;
+                activeViewerRecords.clear();
+                saveViewerRecords();
+                renderViewerRecords();
 
                 document.getElementById('urlContainer').innerText = watchUrl;
                 document.getElementById('pwdCode').innerText = password;
                 document.getElementById('shareInfo').style.display = 'block';
                 document.getElementById('viewerList').style.display = 'block';
+                document.getElementById('viewerRecordPanel').style.display = 'block';
+
+                const promptPreview = document.getElementById('promptPreview');
+                if (sharePrompt) {
+                    promptPreview.innerText = sharePrompt;
+                    promptPreview.style.display = 'block';
+                } else {
+                    promptPreview.innerText = "";
+                    promptPreview.style.display = 'none';
+                }
 
                 status.innerText = "🟢 分享中 - 请勿关闭此页面";
 
@@ -485,6 +813,7 @@
 
                 btn.innerText = "停止投屏";
                 btn.classList.add('active'); // 借用 active 样式使其变红或区分
+                document.getElementById('sharePromptInput').disabled = true;
                 btn.onclick = async () => {
                     await cleanup();
                     window.location.reload(); // 目前依然建议 reload 以确保 UI 状态完全重置
@@ -492,69 +821,58 @@
                 btn.disabled = false;
 
                 document.getElementById('copyUrl').onclick = () => {
-                    const text = `使用浏览器打开，加入投屏：\n${watchUrl}`;
+                    const text = sharePrompt
+                        ? `${sharePrompt}\n\n使用浏览器打开，加入投屏：\n${watchUrl}`
+                        : `使用浏览器打开，加入投屏：\n${watchUrl}`;
                     navigator.clipboard.writeText(text);
                     alert("邀请信息已复制");
                 };
 
                 // ===== 观众状态监听与透传解析 =====
-                const viewersContainer = document.getElementById('viewersContainer');
-
                 client.on("user-joined", (user) => {
                     // 如果 UID 不是通过我们特定编码格式传入的，则跳过
                     if (typeof user.uid !== 'string' || !user.uid.startsWith("viewer|")) return;
+                    if (activeViewerRecords.has(user.uid)) return;
 
-                    const p = user.uid.split("|");
-                    // 格式: viewer|osBrowser|res|dpr|net|lang|theme|uid|fingerprint|visits
-                    const info = {
-                        osBrowser: p[1] || "未知",
-                        res: p[2] || "未知",
-                        dpr: p[3] || "1",
-                        net: p[4] || "未知",
-                        lang: p[5] || "zh",
-                        theme: p[6] || "light",
-                        uid: p[7] || "N/A",
-                        fp: p[8] || "N/A",
-                        visits: p[9] || "1"
+                    const record = {
+                        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                        agoraUid: user.uid,
+                        info: parseViewerInfo(user.uid),
+                        openedAt: new Date().toISOString(),
+                        endedAt: null
                     };
 
-                    const el = document.createElement("div");
-                    el.className = "viewer-item";
-                    el.id = `viewer-${user.uid}`;
-                    el.innerHTML = `
-                        <div class="viewer-main">
-                            <div class="dot"></div>
-                            <b style="color:#fff; margin-right:5px;">${info.osBrowser}</b>
-                        </div>
-                        <div class="viewer-details">
-                            <span class="tag tag-uid">ID: ${info.uid}</span>
-                            <span class="tag tag-visits">第 ${info.visits} 次访问</span>
-                            <span class="tag tag-res">${info.res} @${info.dpr}x</span>
-                            <span class="tag tag-net">${info.net.toUpperCase()}</span>
-                            <span class="tag">${info.lang.toUpperCase()}</span>
-                            <span class="tag">${info.theme === 'dark' ? '🌙' : '☀️'}</span>
-                            <span class="tag" title="指纹: ${info.fp}">FP: ${info.fp}</span>
-                        </div>
-                    `;
-
-                    viewersContainer.appendChild(el);
+                    viewerRecords.push(record);
+                    activeViewerRecords.set(user.uid, record);
+                    saveViewerRecords();
+                    appendActiveViewer(record);
+                    renderViewerRecords();
                 });
 
                 client.on("user-left", (user) => {
                     if (typeof user.uid !== 'string' || !user.uid.startsWith("viewer|")) return;
-                    const el = document.getElementById(`viewer-${user.uid}`);
+                    const record = activeViewerRecords.get(user.uid);
+                    if (record && !record.endedAt) {
+                        record.endedAt = new Date().toISOString();
+                    }
+                    activeViewerRecords.delete(user.uid);
+                    saveViewerRecords();
+                    renderViewerRecords();
+
+                    const el = record ? document.getElementById(`viewer-${record.id}`) : null;
                     if (el) el.remove();
                 });
 
                 // 监听停止共享（点击浏览器顶部的停止或关闭窗口）
                 screenTrack.on("track-ended", () => {
-                    window.location.reload();
+                    cleanup().finally(() => window.location.reload());
                 });
 
             } catch (err) {
                 console.error("Share Error:", err);
                 status.innerText = `🔴 分享失败: ${err.message || '系统繁忙，请刷新再试'}`;
                 btn.disabled = false;
+                document.getElementById('sharePromptInput').disabled = false;
                 if (screenTrack) {
                     screenTrack.stop();
                     screenTrack.close();
@@ -565,6 +883,7 @@
 
         // 统一资源回收逻辑
         async function cleanup() {
+            closeActiveViewerRecords();
             if (screenTrack) {
                 screenTrack.stop();
                 screenTrack.close();
@@ -578,6 +897,7 @@
 
         // 页面关闭/刷新前强制释放资源，防止崩溃或僵尸流
         window.onbeforeunload = () => {
+            closeActiveViewerRecords();
             cleanup();
         };
     </script>

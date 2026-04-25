@@ -96,6 +96,40 @@
             margin-top: 15px;
             min-height: 20px;
         }
+
+        #share-note {
+            display: none;
+            margin: -20px 0 22px;
+            padding: 12px 14px;
+            background: #1c1c1e;
+            border-left: 4px solid #007aff;
+            border-radius: 10px;
+            color: #d8ecff;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        #video-note {
+            display: none;
+            position: absolute;
+            top: 44px;
+            left: 12px;
+            right: 12px;
+            z-index: 11;
+            padding: 10px 12px;
+            background: rgba(28, 28, 30, 0.88);
+            border-left: 4px solid #007aff;
+            border-radius: 10px;
+            color: #d8ecff;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            backdrop-filter: blur(8px);
+        }
     </style>
 </head>
 
@@ -103,6 +137,7 @@
     <div id="login-screen">
         <div class="login-box">
             <h2 style="margin-bottom: 40px; color: #fff;">ScreenCast <br><span style="font-size: 16px; color: #8e8e93;">输入邀请码加入投屏</span></h2>
+            <div id="share-note"></div>
             <input type="tel" id="pwdInput" placeholder="····" maxlength="4" autocomplete="off">
             <button id="enterBtn">确认进入</button>
             <div id="error-msg"></div>
@@ -111,6 +146,7 @@
 
     <div id="video-container">
         <div id="status-bar">等待画面连接...</div>
+        <div id="video-note"></div>
         <div id="player" style="width:100%; height:100%;"></div>
     </div>
 
@@ -184,9 +220,28 @@
             return params.get(name);
         };
         const roomId = getHashParam('room');
+        const sharePrompt = getHashParam('msg') || "";
 
         if (!roomId) {
             document.body.innerHTML = '<div style="padding:50px; text-align:center;"><h2>❌ 链接无效</h2><p>请重新获取分享链接</p></div>';
+            throw new Error("Missing room id");
+        }
+
+        if (sharePrompt) {
+            const shareNoteEl = document.getElementById('share-note');
+            shareNoteEl.innerText = sharePrompt;
+            shareNoteEl.style.display = 'block';
+        }
+
+        function showVideoPrompt() {
+            if (!sharePrompt) return;
+            const videoNoteEl = document.getElementById('video-note');
+            videoNoteEl.innerText = sharePrompt;
+            videoNoteEl.style.display = 'block';
+            clearTimeout(showVideoPrompt.timer);
+            showVideoPrompt.timer = setTimeout(() => {
+                videoNoteEl.style.display = 'none';
+            }, 6000);
         }
 
         // 4 位邀请码自动进入逻辑
@@ -209,6 +264,7 @@
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('video-container').style.display = 'block';
             const statusBar = document.getElementById('status-bar');
+            showVideoPrompt();
 
             try {
                 const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
