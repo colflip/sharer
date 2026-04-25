@@ -65,6 +65,11 @@
             cursor: pointer;
         }
 
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         #video-container {
             display: none;
             position: relative;
@@ -150,8 +155,62 @@
         <div id="player" style="width:100%; height:100%;"></div>
     </div>
 
-    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.23.1.js"></script>
     <script>
+        const AGORA_SDK_SOURCES = [
+            "vendor/AgoraRTC_N-4.23.1.js",
+            "https://download.agora.io/sdk/release/AgoraRTC_N-4.23.1.js"
+        ];
+        let agoraSdkPromise = null;
+
+        function loadScriptWithTimeout(src, timeoutMs = 9000) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+                let settled = false;
+                const timer = setTimeout(() => {
+                    fail(new Error("加载超时"));
+                }, timeoutMs);
+
+                function finish() {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve();
+                }
+
+                function fail(err) {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    script.remove();
+                    reject(err);
+                }
+
+                script.src = src;
+                script.async = true;
+                script.onload = finish;
+                script.onerror = () => fail(new Error("加载失败"));
+                document.head.appendChild(script);
+            });
+        }
+
+        async function ensureAgoraSdk() {
+            if (window.AgoraRTC) return window.AgoraRTC;
+            if (!agoraSdkPromise) {
+                agoraSdkPromise = (async () => {
+                    for (const src of AGORA_SDK_SOURCES) {
+                        try {
+                            await loadScriptWithTimeout(src);
+                            if (window.AgoraRTC) return window.AgoraRTC;
+                        } catch (err) {
+                            console.warn("Agora SDK 加载失败:", src, err);
+                        }
+                    }
+                    throw new Error("投屏组件加载失败，请刷新页面或切换网络后重试");
+                })();
+            }
+            return agoraSdkPromise;
+        }
+
         // 增强版设备信息获取
         function getExtendedDeviceInfo() {
             const ua = navigator.userAgent;
@@ -252,6 +311,7 @@
         });
 
         document.getElementById('enterBtn').onclick = async () => {
+            const enterBtn = document.getElementById('enterBtn');
             const pwd = document.getElementById('pwdInput').value.trim();
             const errorMsg = document.getElementById('error-msg');
 
@@ -261,15 +321,34 @@
             }
 
             // 切换 UI
+            enterBtn.disabled = true;
+            errorMsg.innerText = "";
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('video-container').style.display = 'block';
             const statusBar = document.getElementById('status-bar');
+            statusBar.style.display = "block";
+            statusBar.innerText = "正在加载投屏组件...";
             showVideoPrompt();
 
             try {
+                await ensureAgoraSdk();
                 const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
                 // 构造与分享端一致的频道名
                 const channel = `iosshare-${roomId}-${pwd}`;
+
+                client.on("connection-state-change", (curState, prevState, reason) => {
+                    console.log("连接状态:", prevState, "->", curState, reason || "");
+                    if (curState === "CONNECTING") {
+                        statusBar.style.display = "block";
+                        statusBar.innerText = "正在连接...";
+                    } else if (curState === "RECONNECTING") {
+                        statusBar.style.display = "block";
+                        statusBar.innerText = "🟡 网络波动，正在重连...";
+                    } else if (curState === "FAILED") {
+                        statusBar.style.display = "block";
+                        statusBar.innerText = "🔴 连接失败，请刷新或切换网络后重试";
+                    }
+                });
                 
                 // 将增强的设备信息编码进 UID (格式: viewer|平台_浏览器|分辨率|DPR|网络|语言|主题|UID|指纹|访问次数)
                 const info = getExtendedDeviceInfo();
@@ -278,7 +357,7 @@
                 await client.join(APP_ID, channel, null, viewerUid);
                 statusBar.innerText = "已进入房间，等待画面...";
 
-                // 无后端状态探测：2.5 秒内频道没有分享者，则判定为密码错误或分享已结束
+                // 无后端状态探测：弱网下给足等待时间，避免误判为密码错误或分享已结束
                 setTimeout(async () => {
                     if (client.remoteUsers.length === 0) {
                         errorMsg.innerText = "🔇 邀请码错误或分享已结束";
@@ -288,8 +367,9 @@
                         document.getElementById('video-container').style.display = 'none';
                         document.getElementById('pwdInput').value = "";
                         document.getElementById('pwdInput').focus();
+                        enterBtn.disabled = false;
                     }
-                }, 2500);
+                }, 8000);
 
                 client.on("user-published", async (user, mediaType) => {
                     if (mediaType === "video") {
@@ -316,8 +396,11 @@
 
             } catch (e) {
                 console.error(e);
-                alert("进入失败：可能密码错误或连接超时\n" + e.message);
-                window.location.reload();
+                errorMsg.innerText = e.message || "进入失败：可能密码错误或连接超时";
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('video-container').style.display = 'none';
+                enterBtn.disabled = false;
+                document.getElementById('pwdInput').focus();
             }
         };
 

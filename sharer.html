@@ -68,6 +68,11 @@
             background: #0056b3;
         }
 
+        #generateBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         #generateBtn.active {
             background: #ff453a; /* 醒目的红色，提示停止 */
         }
@@ -292,6 +297,17 @@
             word-break: break-word;
         }
 
+        .copy-toast {
+            display: none;
+            margin-top: 10px;
+            padding: 8px 10px;
+            background: rgba(52, 199, 89, 0.14);
+            color: #34c759;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+        }
+
         .panel-header {
             display: flex;
             align-items: center;
@@ -302,6 +318,16 @@
 
         .panel-header h3 {
             margin: 0;
+        }
+
+        .panel-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .viewer-panel.collapsed .panel-body {
+            display: none;
         }
 
         .mini-btn {
@@ -402,36 +428,118 @@
                 <p style="margin:5px 0;">密码：<b id="pwdCode" style="font-size:24px; color:#fff;"></b></p>
                 <div id="promptPreview" class="prompt-preview"></div>
                 <button class="copy-btn" id="copyUrl">复制完整信息</button>
+                <div id="copyToast" class="copy-toast"></div>
             </div>
         </div>
 
         <div id="viewerList" class="viewer-panel">
-            <h3>实时访客状态</h3>
-            <div id="viewersContainer"></div>
+            <div class="panel-header">
+                <h3>实时访客状态</h3>
+                <button class="mini-btn" data-toggle-panel="viewerList" type="button">收起</button>
+            </div>
+            <div id="viewersContainer" class="panel-body"></div>
         </div>
 
-        <div id="viewerRecordPanel" class="viewer-panel">
+        <div id="viewerRecordPanel" class="viewer-panel collapsed">
             <div class="panel-header">
                 <h3>设备记录</h3>
-                <button class="mini-btn" id="clearRecordsBtn" type="button">清空</button>
+                <div class="panel-actions">
+                    <button class="mini-btn" data-toggle-panel="viewerRecordPanel" type="button">展开</button>
+                    <button class="mini-btn" id="clearRecordsBtn" type="button">清空</button>
+                </div>
             </div>
-            <div id="recordsContainer"></div>
+            <div id="recordsContainer" class="panel-body"></div>
         </div>
     </div>
 
-    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.23.1.js"></script>
     <script>
         const APP_ID = "15b593b2d51e4017bc1c684201630356";
+        const AGORA_SDK_SOURCES = [
+            "vendor/AgoraRTC_N-4.23.1.js",
+            "https://download.agora.io/sdk/release/AgoraRTC_N-4.23.1.js"
+        ];
         let client, screenTrack;
+        let agoraSdkPromise = null;
         let countdownTimer = null; // 全局定时器引用
         let totalSecondsRemaining = 0; // 全局剩余秒数
-        const DEFAULT_SHARE_PROMPT = "请使用浏览器打开链接，参加投屏";
+        let lastAutoDowngradeAt = 0;
+        const DEFAULT_SHARE_PROMPT = "请使用浏览器打开链接，查看投屏";
+        const OLD_DEFAULT_SHARE_PROMPTS = [
+            "请使用浏览器打开链接，参加投屏",
+            "请使用浏览器打开链接，输入邀请码加入投屏。"
+        ];
         const SHARE_PROMPT_KEY = "sc_share_prompt";
         const LAST_RECORDS_KEY = "sc_latest_viewer_records_key";
         const VIEWER_RECORDS_CACHE_KEY = "sc_viewer_records_cache";
         let currentRecordsKey = localStorage.getItem(LAST_RECORDS_KEY) || "";
         let viewerRecords = [];
         const activeViewerRecords = new Map();
+
+        function loadScriptWithTimeout(src, timeoutMs = 9000) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+                let settled = false;
+                const timer = setTimeout(() => {
+                    fail(new Error("加载超时"));
+                }, timeoutMs);
+
+                function finish() {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve();
+                }
+
+                function fail(err) {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    script.remove();
+                    reject(err);
+                }
+
+                script.src = src;
+                script.async = true;
+                script.onload = finish;
+                script.onerror = () => fail(new Error("加载失败"));
+                document.head.appendChild(script);
+            });
+        }
+
+        async function ensureAgoraSdk() {
+            if (window.AgoraRTC) return window.AgoraRTC;
+            if (!agoraSdkPromise) {
+                agoraSdkPromise = (async () => {
+                    for (const src of AGORA_SDK_SOURCES) {
+                        try {
+                            await loadScriptWithTimeout(src);
+                            if (window.AgoraRTC) return window.AgoraRTC;
+                        } catch (err) {
+                            console.warn("Agora SDK 加载失败:", src, err);
+                        }
+                    }
+                    throw new Error("投屏组件加载失败，请刷新页面或切换网络后重试");
+                })();
+            }
+            return agoraSdkPromise;
+        }
+
+        function getShareSupportIssue() {
+            const ua = navigator.userAgent;
+            if (!window.isSecureContext) {
+                return "请使用 HTTPS 页面打开分享端，否则浏览器会阻止屏幕共享。";
+            }
+            if (/MicroMessenger|QQBrowser|MQQBrowser/i.test(ua)) {
+                return "当前内置浏览器兼容性较弱，请复制链接到电脑 Chrome 或 Edge 打开。";
+            }
+            if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) {
+                return "手机浏览器通常不支持发起屏幕共享，请使用电脑 Chrome 或 Edge。";
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                return "当前浏览器不支持屏幕共享，请升级浏览器或使用电脑 Chrome / Edge。";
+            }
+            return "";
+        }
 
         function escapeHtml(value) {
             return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -585,17 +693,49 @@
             renderViewerRecords();
         }
 
+        function showCopyToast(message) {
+            const toast = document.getElementById('copyToast');
+            if (!toast) return;
+            toast.innerText = message;
+            toast.style.display = 'block';
+            clearTimeout(showCopyToast.timer);
+            showCopyToast.timer = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function setupPanelToggle(panelId, defaultExpanded) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+            const toggleBtn = panel.querySelector('[data-toggle-panel]');
+            if (!toggleBtn) return;
+
+            function setExpanded(expanded) {
+                panel.classList.toggle('collapsed', !expanded);
+                toggleBtn.innerText = expanded ? "收起" : "展开";
+                toggleBtn.setAttribute("aria-expanded", String(expanded));
+            }
+
+            setExpanded(defaultExpanded);
+            toggleBtn.onclick = () => {
+                setExpanded(panel.classList.contains('collapsed'));
+            };
+        }
+
         const sharePromptInput = document.getElementById('sharePromptInput');
-        const savedSharePrompt = localStorage.getItem(SHARE_PROMPT_KEY);
-        sharePromptInput.value = savedSharePrompt === null ? DEFAULT_SHARE_PROMPT : savedSharePrompt;
-        if (savedSharePrompt === null) {
+        let savedSharePrompt = localStorage.getItem(SHARE_PROMPT_KEY);
+        if (savedSharePrompt === null || OLD_DEFAULT_SHARE_PROMPTS.includes(savedSharePrompt)) {
+            savedSharePrompt = DEFAULT_SHARE_PROMPT;
             localStorage.setItem(SHARE_PROMPT_KEY, DEFAULT_SHARE_PROMPT);
         }
+        sharePromptInput.value = savedSharePrompt;
         sharePromptInput.addEventListener('input', function() {
             localStorage.setItem(SHARE_PROMPT_KEY, this.value);
         });
 
         loadSavedViewerRecords();
+        setupPanelToggle("viewerList", true);
+        setupPanelToggle("viewerRecordPanel", false);
 
         document.getElementById('clearRecordsBtn').onclick = () => {
             viewerRecords = Array.from(activeViewerRecords.values());
@@ -620,25 +760,69 @@
         };
         let selectedQuality = "standard";
 
+        async function applyScreenQuality(qualityKey) {
+            if (!screenTrack) return;
+            const config = QUALITY_CONFIGS[qualityKey];
+            if (!config) return;
+            await screenTrack.setEncoderConfiguration({
+                width: config.width,
+                height: config.height,
+                frameRate: config.frameRate,
+                bitrateMin: config.bitrateMin,
+                bitrateMax: config.bitrateMax
+            });
+        }
+
+        function setQualityActive(qualityKey) {
+            document.querySelectorAll('#qualitySelector .control-item').forEach(item => {
+                item.classList.toggle('active', item.getAttribute('data-q') === qualityKey);
+            });
+        }
+
+        async function autoDowngradeForWeakNetwork() {
+            if (!screenTrack || selectedQuality === "fluent") return;
+            const now = Date.now();
+            if (now - lastAutoDowngradeAt < 30000) return;
+            lastAutoDowngradeAt = now;
+            selectedQuality = "fluent";
+            setQualityActive(selectedQuality);
+            try {
+                await applyScreenQuality(selectedQuality);
+                document.getElementById('status').innerText = "🟡 网络较弱，已自动降至 540P";
+            } catch (err) {
+                console.warn("自动降级失败:", err);
+            }
+        }
+
+        function bindClientHealthEvents(statusEl) {
+            client.on("connection-state-change", (curState, prevState, reason) => {
+                console.log("连接状态:", prevState, "->", curState, reason || "");
+                if (curState === "RECONNECTING") {
+                    statusEl.innerText = "🟡 网络波动，正在重连...";
+                } else if (curState === "FAILED") {
+                    statusEl.innerText = "🔴 连接失败，请刷新页面或切换网络后重试";
+                }
+            });
+
+            client.on("network-quality", (quality) => {
+                const uplink = quality.uplinkNetworkQuality;
+                if (uplink >= 5) {
+                    autoDowngradeForWeakNetwork();
+                }
+            });
+        }
+
         // 清晰度选择逻辑
         document.querySelectorAll('#qualitySelector .control-item').forEach(item => {
             item.onclick = async () => {
                 if (document.getElementById('generateBtn').disabled && !screenTrack) return; // 只有在未开始投屏时才禁用
-                document.querySelectorAll('#qualitySelector .control-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
                 selectedQuality = item.getAttribute('data-q');
+                setQualityActive(selectedQuality);
 
                 // 如果正在投屏，动态应用新配置
                 if (screenTrack) {
-                    const config = QUALITY_CONFIGS[selectedQuality];
                     try {
-                        await screenTrack.setEncoderConfiguration({
-                            width: config.width,
-                            height: config.height,
-                            frameRate: config.frameRate,
-                            bitrateMin: config.bitrateMin,
-                            bitrateMax: config.bitrateMax
-                        });
+                        await applyScreenQuality(selectedQuality);
                         console.log("清晰度已动态切换为:", selectedQuality);
                     } catch (e) {
                         console.error("动态切换清晰度失败:", e);
@@ -730,18 +914,28 @@
                 return;
             }
 
+            const supportIssue = getShareSupportIssue();
+            if (supportIssue) {
+                status.innerText = `🔴 ${supportIssue}`;
+                return;
+            }
+
             // 生成 4 位密码和随机房间 ID
             const password = String(Math.floor(1000 + Math.random() * 9000));
             const roomId = Math.random().toString(36).substring(7);
             const channel = `iosshare-${roomId}-${password}`;
-            const sharePrompt = document.getElementById('sharePromptInput').value.trim();
+            const sharePrompt = document.getElementById('sharePromptInput').value.trim() || DEFAULT_SHARE_PROMPT;
             localStorage.setItem(SHARE_PROMPT_KEY, sharePrompt);
+            document.getElementById('sharePromptInput').value = sharePrompt;
 
             try {
                 btn.disabled = true;
+                status.innerText = "正在加载投屏组件...";
+                await ensureAgoraSdk();
                 status.innerText = "正在请求共享权限...";
 
                 client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+                bindClientHealthEvents(status);
 
                 // 应用选中的清晰度配置 (开启 detail 模式优化画质)
                 const config = QUALITY_CONFIGS[selectedQuality];
@@ -771,7 +965,6 @@
                 // 生成观看链接 (自适应当前部署域名，全网通用)
                 const baseUrl = window.location.origin + window.location.pathname.replace('sharer.html', '');
                 const hashParams = new URLSearchParams({ room: roomId, pwd: password });
-                if (sharePrompt) hashParams.set("msg", sharePrompt);
                 const watchUrl = `${baseUrl}index.html#${hashParams.toString()}`;
 
                 currentRecordsKey = `sc_viewer_records_${roomId}_${password}`;
@@ -821,11 +1014,10 @@
                 btn.disabled = false;
 
                 document.getElementById('copyUrl').onclick = () => {
-                    const text = sharePrompt
-                        ? `${sharePrompt}\n\n使用浏览器打开，加入投屏：\n${watchUrl}`
-                        : `使用浏览器打开，加入投屏：\n${watchUrl}`;
-                    navigator.clipboard.writeText(text);
-                    alert("邀请信息已复制");
+                    const text = `${sharePrompt}\n${watchUrl}`;
+                    navigator.clipboard.writeText(text)
+                        .then(() => showCopyToast("邀请信息已复制"))
+                        .catch(() => showCopyToast("复制失败，请手动复制链接"));
                 };
 
                 // ===== 观众状态监听与透传解析 =====
