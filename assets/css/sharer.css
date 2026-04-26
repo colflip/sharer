@@ -1,0 +1,474 @@
+body {
+    margin: 0;
+    background: #111;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    background: #1c1c1e;
+    padding: 35px 30px;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    text-align: center;
+}
+
+h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 24px;
+    letter-spacing: -0.5px;
+    color: #007aff;
+}
+
+.app-subtitle {
+    font-size: 16px;
+    color: #8e8e93;
+    font-weight: normal;
+}
+
+.guide {
+    text-align: left;
+    background: #2c2c2e;
+    padding: 12px 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #ccc;
+}
+
+.guide b {
+    color: #fff;
+}
+
+.guide-steps {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 25px;
+}
+
+.guide-title {
+    color: #fff;
+    font-size: 15px;
+    margin: 0 0 12px;
+    font-weight: 500;
+}
+
+.guide-list {
+    color: #8e8e93;
+    font-size: 14px;
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.75;
+}
+
+.share-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.share-actions button {
+    flex: 1;
+    min-width: 0;
+}
+
+#generateBtn,
+#pauseBtn {
+    width: 100%;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 15px;
+    border: none;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#generateBtn {
+    background: #007aff;
+}
+
+#generateBtn:hover {
+    background: #0056b3;
+}
+
+#generateBtn:disabled,
+#pauseBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#generateBtn.active {
+    background: #ff453a; /* 醒目的红色，提示停止 */
+}
+
+#generateBtn.active:hover {
+    background: #d73a2f;
+}
+
+#pauseBtn {
+    display: none;
+    background: #ff9f0a;
+}
+
+#pauseBtn:hover {
+    background: #c97800;
+}
+
+#pauseBtn.paused {
+    background: #34c759;
+}
+
+#pauseBtn.paused:hover {
+    background: #248a3d;
+}
+
+#shareInfo {
+    display: none;
+    margin-top: 15px;
+    text-align: left;
+    word-break: break-all;
+}
+
+.info-card {
+    background: #2c2c2e;
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #34c759;
+}
+
+.share-success {
+    margin: 0 0 10px;
+    color: #34c759;
+    font-weight: bold;
+}
+
+.url-box {
+    font-size: 14px;
+    background: #111;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.password-line {
+    margin: 5px 0;
+}
+
+#pwdCode {
+    font-size: 24px;
+    color: #fff;
+}
+
+.copy-btn {
+    margin-top: 10px;
+    padding: 8px 15px;
+    background: #3a3a3c;
+    border: none;
+    color: #007aff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+#status {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #8e8e93;
+}
+
+.viewer-panel {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    text-align: left;
+    display: none;
+}
+
+.viewer-panel h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+.viewer-item {
+    font-size: 12px;
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.viewer-item:last-child {
+    border-bottom: none;
+}
+
+.viewer-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.viewer-row::-webkit-scrollbar {
+    display: none;
+}
+
+.viewer-main {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-right: 5px;
+}
+
+.viewer-device-name {
+    color: #fff;
+    margin-right: 5px;
+}
+
+.viewer-item .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #34c759;
+    margin-right: 8px;
+}
+
+.viewer-details {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.viewer-times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-left: 14px;
+}
+
+.tag {
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    font-size: 10px;
+    color: #999;
+    white-space: nowrap;
+}
+
+.tag-uid {
+    background: rgba(0, 122, 255, 0.15);
+    color: #007aff;
+}
+
+.tag-visits {
+    background: rgba(255, 55, 95, 0.15);
+    color: #ff375f;
+    font-weight: bold;
+}
+
+.tag-net {
+    background: rgba(52, 199, 89, 0.15);
+    color: #34c759;
+}
+
+.tag-res {
+    background: rgba(255, 159, 10, 0.15);
+    color: #ff9f0a;
+}
+
+/* 统一分段选择器样式 */
+.segmented-control {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+    border-radius: 14px;
+    margin-bottom: 10px;
+    justify-content: center;
+}
+
+.control-item {
+    flex: 1;
+    padding: 12px 0;
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 10px;
+    color: #8e8e93;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.control-item.active {
+    background: #3a3a3c;
+    color: #007aff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+#customDurationBox {
+    margin-bottom: 12px;
+    display: none;
+}
+
+#customDurationBox input {
+    width: 100%;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 12px;
+    font-size: 15px;
+    outline: none;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.field-block {
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.field-block label {
+    display: block;
+    margin-bottom: 8px;
+    color: #8e8e93;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#sharePromptInput {
+    width: 100%;
+    min-height: 68px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+}
+
+#sharePromptInput:focus {
+    border-color: #007aff;
+}
+
+#sharePromptInput:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.prompt-preview {
+    display: none;
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(0, 122, 255, 0.12);
+    border-radius: 8px;
+    color: #d8ecff;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.copy-toast {
+    display: none;
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: rgba(52, 199, 89, 0.14);
+    color: #34c759;
+    border-radius: 8px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.panel-header h3 {
+    margin: 0;
+}
+
+.panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.viewer-panel.collapsed .panel-body {
+    display: none;
+}
+
+.mini-btn {
+    padding: 5px 9px;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: #8e8e93;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.record-item {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.record-item:last-child {
+    border-bottom: none;
+}
+
+.record-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.record-device-name {
+    color: #fff;
+}
+
+.record-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.record-times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.empty-state {
+    padding: 12px 0;
+    color: #636366;
+    font-size: 13px;
+    text-align: center;
+}

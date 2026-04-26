@@ -1,0 +1,148 @@
+body {
+    margin: 0;
+    background: #000;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#login-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: #111;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+}
+
+h2 { margin-bottom: 30px; font-weight: 400; }
+
+.login-title {
+    margin-bottom: 40px;
+    color: #fff;
+}
+
+.login-subtitle {
+    font-size: 16px;
+    color: #8e8e93;
+}
+
+input {
+    width: 100%;
+    padding: 15px;
+    font-size: 24px;
+    letter-spacing: 12px;
+    text-align: center;
+    background: #2c2c2e;
+    border: 1px solid #3a3a3c;
+    color: #fff;
+    border-radius: 12px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+input:focus { border-color: #007aff; }
+
+button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: 600;
+    background: #007aff;
+    border: none;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#video-container {
+    display: none;
+    position: relative;
+    flex: 1;
+    background: #000;
+}
+
+#player {
+    width: 100%;
+    height: 100%;
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 保持 iOS 屏幕比例 */
+}
+
+#status-bar {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    font-size: 12px;
+    color: #ccc;
+    text-align: center;
+    z-index: 10;
+}
+
+#error-msg {
+    color: #ff453a;
+    font-size: 14px;
+    margin-top: 15px;
+    min-height: 20px;
+}
+
+#share-note {
+    display: none;
+    margin: -20px 0 22px;
+    padding: 12px 14px;
+    background: #1c1c1e;
+    border-left: 4px solid #007aff;
+    border-radius: 10px;
+    color: #d8ecff;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: left;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+#video-note {
+    display: none;
+    position: absolute;
+    top: 44px;
+    left: 12px;
+    right: 12px;
+    z-index: 11;
+    padding: 10px 12px;
+    background: rgba(28, 28, 30, 0.88);
+    border-left: 4px solid #007aff;
+    border-radius: 10px;
+    color: #d8ecff;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    backdrop-filter: blur(8px);
+}
+
+.invalid-link {
+    padding: 50px;
+    text-align: center;
+}
