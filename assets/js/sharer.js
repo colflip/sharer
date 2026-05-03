@@ -35,6 +35,18 @@ function getShareSupportIssue() {
     return "";
 }
 
+function scrollShareControlsIntoView() {
+    const shareActions = document.querySelector('.share-actions');
+    if (!shareActions) return;
+
+    requestAnimationFrame(() => {
+        shareActions.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    });
+}
+
 function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({
         "&": "&amp;",
@@ -624,6 +636,7 @@ document.getElementById('generateBtn').onclick = async () => {
         pauseBtn.style.display = 'block';
         pauseBtn.onclick = toggleScreenPause;
         pauseBtn.disabled = false;
+        scrollShareControlsIntoView();
         btn.onclick = async () => {
             await cleanup();
             window.location.reload(); // 目前依然建议 reload 以确保 UI 状态完全重置

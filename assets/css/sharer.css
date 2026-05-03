@@ -73,6 +73,7 @@ h2 {
     display: flex;
     gap: 10px;
     margin-top: 5px;
+    scroll-margin-top: 18px;
 }
 
 .share-actions button {
