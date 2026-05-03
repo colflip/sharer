@@ -13,10 +13,12 @@ const OLD_DEFAULT_SHARE_PROMPTS = [
 const SHARE_PROMPT_KEY = "sc_share_prompt";
 const LAST_RECORDS_KEY = "sc_latest_viewer_records_key";
 const VIEWER_RECORDS_CACHE_KEY = "sc_viewer_records_cache";
+const RECENT_RECORD_WINDOW_DAYS = 3;
 let currentRecordsKey = localStorage.getItem(LAST_RECORDS_KEY) || "";
 let viewerRecords = [];
 const activeViewerRecords = new Map();
 let durationRefreshTimer = null;
+let earlierRecordsExpanded = false;
 
 function getShareSupportIssue() {
     const ua = navigator.userAgent;
@@ -130,6 +132,70 @@ function buildTimeTags(record) {
     `;
 }
 
+function isRecentRecord(record) {
+    const openedAt = new Date(record.openedAt).getTime();
+    if (Number.isNaN(openedAt)) return false;
+
+    const ageMs = Date.now() - openedAt;
+    return ageMs >= 0 && ageMs <= RECENT_RECORD_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+}
+
+function buildRecordHtml(record) {
+    const info = record.info || {};
+    return `
+        <div class="record-item">
+            <div class="record-title">
+                <b class="record-device-name">${escapeHtml(info.osBrowser || "未知设备")}</b>
+                <span class="tag">${record.endedAt ? "已结束" : "在线中"}</span>
+            </div>
+            <div class="record-meta">${buildInfoTags(info)}</div>
+            <div class="record-times">
+                ${buildTimeTags(record)}
+            </div>
+        </div>
+    `;
+}
+
+function buildRecordGroupHtml(title, records, options = {}) {
+    if (!records.length) return "";
+
+    const collapsed = Boolean(options.collapsed);
+    const toggleHtml = options.toggleId
+        ? `<button class="mini-btn record-group-toggle" data-toggle-record-group="${escapeHtml(options.toggleId)}" type="button">${collapsed ? "展开" : "收起"}</button>`
+        : "";
+
+    return `
+        <section class="record-group${collapsed ? " collapsed" : ""}" data-record-group="${escapeHtml(options.toggleId || title)}">
+            <div class="record-group-header">
+                <div>
+                    <h4>${escapeHtml(title)}</h4>
+                    <span>${records.length} 条</span>
+                </div>
+                ${toggleHtml}
+            </div>
+            <div class="record-group-body">
+                ${records.map(buildRecordHtml).join("")}
+            </div>
+        </section>
+    `;
+}
+
+function bindRecordGroupToggles() {
+    document.querySelectorAll('[data-toggle-record-group]').forEach((toggleBtn) => {
+        toggleBtn.onclick = () => {
+            const groupId = toggleBtn.dataset.toggleRecordGroup;
+            const group = document.querySelector(`[data-record-group="${groupId}"]`);
+            if (!group) return;
+
+            const nextExpanded = group.classList.contains('collapsed');
+            group.classList.toggle('collapsed', !nextExpanded);
+            toggleBtn.innerText = nextExpanded ? "收起" : "展开";
+            toggleBtn.setAttribute("aria-expanded", String(nextExpanded));
+            if (groupId === "earlier") earlierRecordsExpanded = nextExpanded;
+        };
+    });
+}
+
 function refreshLiveDurations() {
     document.querySelectorAll('.duration-tag[data-ended-at=""]').forEach((tag) => {
         tag.textContent = `连接时长: ${formatDuration(tag.dataset.openedAt, tag.dataset.endedAt)}`;
@@ -191,22 +257,19 @@ function renderViewerRecords() {
         return;
     }
 
+    const sortedRecords = viewerRecords.slice().reverse();
+    const recentRecords = sortedRecords.filter(isRecentRecord);
+    const earlierRecords = sortedRecords.filter((record) => !isRecentRecord(record));
+
     panel.style.display = "block";
-    container.innerHTML = viewerRecords.slice().reverse().map((record) => {
-        const info = record.info || {};
-        return `
-            <div class="record-item">
-                <div class="record-title">
-                            <b class="record-device-name">${escapeHtml(info.osBrowser || "未知设备")}</b>
-                    <span class="tag">${record.endedAt ? "已结束" : "在线中"}</span>
-                </div>
-                <div class="record-meta">${buildInfoTags(info)}</div>
-                <div class="record-times">
-                    ${buildTimeTags(record)}
-                </div>
-            </div>
-        `;
-    }).join("");
+    container.innerHTML = [
+        buildRecordGroupHtml("近期记录", recentRecords),
+        buildRecordGroupHtml("更早记录", earlierRecords, {
+            collapsed: !earlierRecordsExpanded,
+            toggleId: "earlier"
+        })
+    ].join("") || '<div class="empty-state">暂无打开记录</div>';
+    bindRecordGroupToggles();
     syncDurationRefreshTimer();
 }
 
@@ -272,21 +335,26 @@ function showCopyToast(message) {
     }, 3000);
 }
 
+function setPanelExpanded(panelId, expanded) {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    const toggleBtn = panel.querySelector('[data-toggle-panel]');
+    if (!toggleBtn) return;
+
+    panel.classList.toggle('collapsed', !expanded);
+    toggleBtn.innerText = expanded ? "收起" : "展开";
+    toggleBtn.setAttribute("aria-expanded", String(expanded));
+}
+
 function setupPanelToggle(panelId, defaultExpanded) {
     const panel = document.getElementById(panelId);
     if (!panel) return;
     const toggleBtn = panel.querySelector('[data-toggle-panel]');
     if (!toggleBtn) return;
 
-    function setExpanded(expanded) {
-        panel.classList.toggle('collapsed', !expanded);
-        toggleBtn.innerText = expanded ? "收起" : "展开";
-        toggleBtn.setAttribute("aria-expanded", String(expanded));
-    }
-
-    setExpanded(defaultExpanded);
+    setPanelExpanded(panelId, defaultExpanded);
     toggleBtn.onclick = () => {
-        setExpanded(panel.classList.contains('collapsed'));
+        setPanelExpanded(panelId, panel.classList.contains('collapsed'));
     };
 }
 
@@ -601,6 +669,7 @@ document.getElementById('generateBtn').onclick = async () => {
         document.getElementById('shareInfo').style.display = 'block';
         document.getElementById('viewerList').style.display = 'block';
         document.getElementById('viewerRecordPanel').style.display = 'block';
+        setPanelExpanded("viewerRecordPanel", true);
 
         const promptPreview = document.getElementById('promptPreview');
         if (sharePrompt) {
