@@ -91,34 +91,78 @@ function formatDuration(openedAt, endedAt) {
 
 function parseViewerInfo(viewerUid) {
     const p = viewerUid.split("|");
+    if (p[1] === "v2") {
+        return {
+            version: "v2",
+            osBrowser: p[2] || "未知",
+            deviceType: p[3] || "Device",
+            browser: p[4] || "Browser",
+            platform: p[5] || "Other",
+            res: p[6] || "未知",
+            dpr: p[7] || "1",
+            net: p[8] || "未知",
+            lang: p[9] || "zh",
+            theme: p[10] || "light",
+            uid: p[11] || "N/A",
+            visitorId: p[11] || "N/A",
+            sessionId: p[12] || "N/A",
+            fp: p[13] || "N/A",
+            visits: p[14] || "1",
+            timeZone: p[15] || "unknown",
+            hasTouch: p[16] || "unknown"
+        };
+    }
+
     return {
+        version: "v1",
         osBrowser: p[1] || "未知",
+        deviceType: "Device",
+        browser: "Browser",
+        platform: "Other",
         res: p[2] || "未知",
         dpr: p[3] || "1",
         net: p[4] || "未知",
         lang: p[5] || "zh",
         theme: p[6] || "light",
         uid: p[7] || "N/A",
+        visitorId: p[7] || "N/A",
+        sessionId: "N/A",
         fp: p[8] || "N/A",
-        visits: p[9] || "1"
+        visits: p[9] || "1",
+        timeZone: "unknown",
+        hasTouch: "unknown"
     };
 }
 
 function getViewerDeviceKey(viewerUid, info = parseViewerInfo(viewerUid)) {
+    const sessionId = info.sessionId && info.sessionId !== "N/A" ? info.sessionId : "";
     const uid = info.uid && info.uid !== "N/A" ? info.uid : "";
     const fp = info.fp && info.fp !== "N/A" ? info.fp : "";
-    return uid || fp || viewerUid;
+    return sessionId || uid || fp || viewerUid;
+}
+
+function formatDecimal(value, digits = 2) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return value || "未知";
+    return number.toFixed(digits).replace(/\.?0+$/, "");
 }
 
 function buildInfoTags(info) {
     const safeNet = escapeHtml(String(info.net || "unknown").toUpperCase());
     const safeLang = escapeHtml(String(info.lang || "zh").toUpperCase());
+    const safeDpr = escapeHtml(formatDecimal(info.dpr));
+    const deviceType = info.deviceType && info.deviceType !== "Device" ? escapeHtml(info.deviceType) : "";
+    const timeZone = info.timeZone && info.timeZone !== "unknown" ? escapeHtml(info.timeZone) : "";
+    const sessionId = info.sessionId && info.sessionId !== "N/A" ? escapeHtml(info.sessionId) : "";
     return `
-        <span class="tag tag-uid">ID: ${escapeHtml(info.uid)}</span>
+        <span class="tag tag-uid">访客: ${escapeHtml(info.uid)}</span>
+        ${sessionId ? `<span class="tag tag-session">会话: ${sessionId}</span>` : ""}
         <span class="tag tag-visits">第 ${escapeHtml(info.visits)} 次访问</span>
-        <span class="tag tag-res">${escapeHtml(info.res)} @${escapeHtml(info.dpr)}x</span>
+        ${deviceType ? `<span class="tag">${deviceType}</span>` : ""}
+        <span class="tag tag-res">${escapeHtml(info.res)} @${safeDpr}x</span>
         <span class="tag tag-net">${safeNet}</span>
         <span class="tag">${safeLang}</span>
+        ${timeZone ? `<span class="tag">${timeZone}</span>` : ""}
         <span class="tag">${info.theme === 'dark' ? '🌙' : '☀️'}</span>
         <span class="tag" title="指纹: ${escapeHtml(info.fp)}">FP: ${escapeHtml(info.fp)}</span>
     `;
@@ -259,11 +303,14 @@ function renderViewerRecords() {
 
 function buildActiveViewerHtml(record) {
     const info = record.info;
+    const deviceLabel = info.deviceType && info.deviceType !== "Device"
+        ? `${info.osBrowser} · ${info.deviceType}`
+        : info.osBrowser;
     return `
         <div class="viewer-row">
             <div class="viewer-main">
                 <div class="dot"></div>
-                        <b class="viewer-device-name">${escapeHtml(info.osBrowser)}</b>
+                <b class="viewer-device-name">${escapeHtml(deviceLabel)}</b>
             </div>
             <div class="viewer-details">
                 ${buildInfoTags(info)}
@@ -357,6 +404,14 @@ function updateShareStatus() {
     statusEl.innerText = isScreenPaused
         ? `⏸️ 已暂停投屏 - ${timeText}`
         : `🟢 分享中 - ${timeText}`;
+}
+
+function appendShareNotice(message) {
+    const statusEl = document.getElementById('status');
+    if (!statusEl || !message) return;
+    statusEl.innerText = statusEl.innerText
+        ? `${statusEl.innerText}\n${message}`
+        : message;
 }
 
 function updatePauseButton() {
@@ -453,15 +508,15 @@ function setQualityActive(qualityKey) {
 }
 
 async function autoDowngradeForWeakNetwork() {
-    if (!screenTrack || isScreenPaused || selectedQuality === "fluent") return;
+    if (!screenTrack || isScreenPaused || selectedQuality === "high") return;
     const now = Date.now();
     if (now - lastAutoDowngradeAt < 30000) return;
     lastAutoDowngradeAt = now;
-    selectedQuality = "fluent";
+    selectedQuality = "high";
     setQualityActive(selectedQuality);
     try {
         await applyScreenQuality(selectedQuality);
-        document.getElementById('status').innerText = "🟡 网络较弱，已自动降至 540P";
+        document.getElementById('status').innerText = "🟡 网络较弱，已自动降至 1K";
     } catch (err) {
         console.warn("自动降级失败:", err);
     }
@@ -585,16 +640,14 @@ document.getElementById('generateBtn').onclick = async () => {
     const pauseBtn = document.getElementById('pauseBtn');
     const status = document.getElementById('status');
 
-    // 环境检测：防止用户在本地打开文件时生成错误的本地链接
+    let preflightNotice = "";
     if (window.location.protocol === 'file:') {
-        alert("🔴 检测到您正在打开本地文件！\n\n请先访问您部署在 Render 的域名地址（例如 https://xxx.onrender.com/sharer.html），从线上页面点击分享，否则生成的链接别人无法打开。");
-        return;
+        preflightNotice = "🟡 当前是本地文件页面，生成的观看链接可能只在本机可用。";
     }
 
     const supportIssue = getShareSupportIssue();
     if (supportIssue) {
-        status.innerText = `🔴 ${supportIssue}`;
-        return;
+        preflightNotice = [preflightNotice, `🟡 ${supportIssue}`].filter(Boolean).join("\n");
     }
 
     // 生成 4 位密码和随机房间 ID
@@ -607,9 +660,11 @@ document.getElementById('generateBtn').onclick = async () => {
 
     try {
         btn.disabled = true;
-        status.innerText = "正在加载投屏组件...";
+        status.innerText = preflightNotice || "正在加载投屏组件...";
         await ensureAgoraSdk();
-        status.innerText = "正在请求共享权限...";
+        status.innerText = preflightNotice
+            ? `${preflightNotice}\n正在请求共享权限...`
+            : "正在请求共享权限...";
 
         client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
         bindClientHealthEvents(status);
@@ -680,6 +735,7 @@ document.getElementById('generateBtn').onclick = async () => {
             totalSecondsRemaining = 0;
         }
         updateShareStatus();
+        appendShareNotice(preflightNotice);
 
         btn.innerText = "停止投屏";
         btn.classList.add('active'); // 借用 active 样式使其变红或区分

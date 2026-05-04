@@ -1,5 +1,18 @@
 const APP_ID = window.ScreenCastConfig.APP_ID;
 
+function createShortId(prefix = "") {
+    const randomPart = Math.random().toString(36).substring(2, 8);
+    const timePart = Date.now().toString(36).slice(-4);
+    return `${prefix}${randomPart}${timePart}`;
+}
+
+function getDeviceType(ua) {
+    if (/iPad|Tablet/i.test(ua)) return "Tablet";
+    if (/Android/i.test(ua) && !/Mobile/i.test(ua)) return "Tablet";
+    if (/iPhone|iPod|Android|Mobile/i.test(ua)) return "Mobile";
+    return "Desktop";
+}
+
 // 增强版设备信息获取
 function getExtendedDeviceInfo() {
     const ua = navigator.userAgent;
@@ -17,6 +30,7 @@ function getExtendedDeviceInfo() {
     else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
     else if (/Firefox/i.test(ua)) browser = "Firefox";
     const osBrowser = `${platform}_${browser}`;
+    const deviceType = getDeviceType(ua);
 
     // 2. 屏幕属性
     const res = `${window.screen.width}x${window.screen.height}`;
@@ -31,13 +45,17 @@ function getExtendedDeviceInfo() {
     // 4. 语言与主题
     const lang = (navigator.language || "zh").split('-')[0]; // 取简码如 zh, en
     const theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown";
+    const hasTouch = navigator.maxTouchPoints > 0 ? "touch" : "no-touch";
 
-    // 5. 持久化 Unique ID 与 访问次数 (存储在 localStorage)
-    let uid = localStorage.getItem('sc_uid');
-    if (!uid) {
-        uid = Math.random().toString(36).substring(2, 8);
-        localStorage.setItem('sc_uid', uid);
+    // 5. 持久化访客 ID、单次会话 ID 与访问次数
+    let visitorId = localStorage.getItem('sc_visitor_id') || localStorage.getItem('sc_uid');
+    if (!visitorId) {
+        visitorId = createShortId("v_");
     }
+    localStorage.setItem('sc_visitor_id', visitorId);
+    localStorage.setItem('sc_uid', visitorId);
+    const sessionId = createShortId("s_");
     
     let visits = parseInt(localStorage.getItem('sc_visits') || '0') + 1;
     localStorage.setItem('sc_visits', visits.toString());
@@ -51,7 +69,23 @@ function getExtendedDeviceInfo() {
     }
     const fingerprint = Math.abs(hash).toString(36);
 
-    return { osBrowser, res, dpr, net, lang, theme, uid, fingerprint, visits };
+    return {
+        osBrowser,
+        platform,
+        browser,
+        deviceType,
+        res,
+        dpr,
+        net,
+        lang,
+        theme,
+        visitorId,
+        sessionId,
+        fingerprint,
+        visits,
+        timeZone,
+        hasTouch
+    };
 }
 
 // 监听 URL 变化：解决同一窗口下重新打开链接不刷新的问题
@@ -137,9 +171,27 @@ document.getElementById('enterBtn').onclick = async () => {
             }
         });
         
-        // 将增强的设备信息编码进 UID (格式: viewer|平台_浏览器|分辨率|DPR|网络|语言|主题|UID|指纹|访问次数)
+        // 将增强的设备信息编码进 UID，分享端可无后端识别访客与单次会话
         const info = getExtendedDeviceInfo();
-        const viewerUid = `viewer|${info.osBrowser}|${info.res}|${info.dpr}|${info.net}|${info.lang}|${info.theme}|${info.uid}|${info.fingerprint}|${info.visits}`;
+        const viewerUid = [
+            "viewer",
+            "v2",
+            info.osBrowser,
+            info.deviceType,
+            info.browser,
+            info.platform,
+            info.res,
+            info.dpr,
+            info.net,
+            info.lang,
+            info.theme,
+            info.visitorId,
+            info.sessionId,
+            info.fingerprint,
+            info.visits,
+            info.timeZone,
+            info.hasTouch
+        ].join("|");
 
         await client.join(APP_ID, channel, null, viewerUid);
         statusBar.innerText = "已进入房间，等待画面...";

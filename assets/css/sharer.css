@@ -178,6 +178,7 @@ h2 {
     margin-top: 15px;
     font-size: 14px;
     color: #8e8e93;
+    white-space: pre-line;
 }
 
 .viewer-panel {
@@ -213,7 +214,7 @@ h2 {
 .viewer-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 4px;
     overflow-x: auto;
     scrollbar-width: none;
 }
@@ -226,12 +227,12 @@ h2 {
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    margin-right: 5px;
+    margin-right: 0;
 }
 
 .viewer-device-name {
     color: #fff;
-    margin-right: 5px;
+    margin-right: 0;
 }
 
 .viewer-item .dot {
@@ -268,6 +269,11 @@ h2 {
 .tag-uid {
     background: rgba(0, 122, 255, 0.15);
     color: #007aff;
+}
+
+.tag-session {
+    background: rgba(94, 92, 230, 0.15);
+    color: #8f8cff;
 }
 
 .tag-visits {
@@ -469,16 +475,24 @@ h2 {
     display: none;
 }
 
+.record-group-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .record-group-toggle {
     flex-shrink: 0;
 }
 
 .record-item {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
 }
 
 .record-item:last-child {
-    border-bottom: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .empty-state {
