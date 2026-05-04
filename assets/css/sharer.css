@@ -485,7 +485,6 @@ h2 {
 .record-group-body {
     display: flex;
     flex-direction: column;
-    gap: 8px;
 }
 
 .record-group-toggle {
@@ -493,13 +492,11 @@ h2 {
 }
 
 .record-item {
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .record-item:last-child {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: none;
 }
 
 .empty-state {
