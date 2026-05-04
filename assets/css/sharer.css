@@ -276,6 +276,17 @@ h2 {
     color: #8f8cff;
 }
 
+.tag-note {
+    background: rgba(255, 214, 10, 0.14);
+    color: #ffd60a;
+    font-weight: bold;
+}
+
+.tag-support {
+    background: rgba(10, 132, 255, 0.14);
+    color: #64d2ff;
+}
+
 .tag-visits {
     background: rgba(255, 55, 95, 0.15);
     color: #ff375f;
@@ -485,6 +496,7 @@ h2 {
 .record-group-body {
     display: flex;
     flex-direction: column;
+    gap: 12px;
 }
 
 .record-group-toggle {
@@ -497,6 +509,59 @@ h2 {
 
 .record-item:last-child {
     border-bottom: none;
+}
+
+.visitor-record-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.visitor-record-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0 6px;
+}
+
+.visitor-record-title {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+}
+
+.visitor-record-title b {
+    color: #fff;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.visitor-record-title span {
+    color: #636366;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.visitor-note-input {
+    width: 150px;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-size: 12px;
+    outline: none;
+}
+
+.visitor-note-input:focus {
+    border-color: #007aff;
+}
+
+.visitor-record-sessions {
+    display: flex;
+    flex-direction: column;
 }
 
 .empty-state {
