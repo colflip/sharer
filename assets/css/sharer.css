@@ -11,7 +11,7 @@ body {
 
 .container {
     width: 100%;
-    max-width: 660px;
+    max-width: 680px;
     background: #1c1c1e;
     padding: 35px 30px;
     border-radius: 24px;
@@ -246,19 +246,19 @@ h2 {
 .viewer-details {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
     flex-shrink: 0;
 }
 
 .viewer-times {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 3px;
     padding-left: 0;
 }
 
 .tag {
-    padding: 2px 6px;
+    padding: 2px 4px;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 4px;
     font-size: 10px;
@@ -274,12 +274,6 @@ h2 {
 .tag-session {
     background: rgba(94, 92, 230, 0.15);
     color: #8f8cff;
-}
-
-.tag-note {
-    background: rgba(255, 214, 10, 0.14);
-    color: #ffd60a;
-    font-weight: bold;
 }
 
 .tag-support {
@@ -509,28 +503,6 @@ h2 {
 
 .record-item:last-child {
     border-bottom: none;
-}
-
-.record-note-row {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-}
-
-.visitor-note-input {
-    width: 150px;
-    min-width: 0;
-    padding: 6px 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.06);
-    color: #fff;
-    font-size: 12px;
-    outline: none;
-}
-
-.visitor-note-input:focus {
-    border-color: #007aff;
 }
 
 .empty-state {

@@ -13,14 +13,12 @@ const OLD_DEFAULT_SHARE_PROMPTS = [
 const SHARE_PROMPT_KEY = "sc_share_prompt";
 const LAST_RECORDS_KEY = "sc_latest_viewer_records_key";
 const VIEWER_RECORDS_CACHE_KEY = "sc_viewer_records_cache";
-const VIEWER_NOTES_KEY = "sc_viewer_notes";
 const RECENT_RECORD_LIMIT = 10;
 let currentRecordsKey = localStorage.getItem(LAST_RECORDS_KEY) || "";
 let viewerRecords = [];
 const activeViewerRecords = new Map();
 let durationRefreshTimer = null;
 let earlierRecordsExpanded = false;
-let viewerNotes = loadViewerNotes();
 
 function getShareSupportIssue() {
     const ua = navigator.userAgent;
@@ -149,36 +147,8 @@ function formatDecimal(value, digits = 2) {
     return number.toFixed(digits).replace(/\.?0+$/, "");
 }
 
-function loadViewerNotes() {
-    try {
-        const saved = JSON.parse(localStorage.getItem(VIEWER_NOTES_KEY) || "{}");
-        return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
-    } catch (err) {
-        console.warn("读取访客备注失败:", err);
-        return {};
-    }
-}
-
-function saveViewerNotes() {
-    localStorage.setItem(VIEWER_NOTES_KEY, JSON.stringify(viewerNotes));
-}
-
 function getVisitorId(info = {}) {
     return info.visitorId || info.uid || info.fp || "N/A";
-}
-
-function getViewerNote(visitorId) {
-    return viewerNotes[visitorId] || "";
-}
-
-function setViewerNote(visitorId, note) {
-    const cleaned = String(note || "").trim().slice(0, 24);
-    if (cleaned) {
-        viewerNotes[visitorId] = cleaned;
-    } else {
-        delete viewerNotes[visitorId];
-    }
-    saveViewerNotes();
 }
 
 function getBrowserSupport(info = {}) {
@@ -196,13 +166,11 @@ function formatNetworkType(net) {
 
 function buildInfoTags(info) {
     const visitorId = getVisitorId(info);
-    const note = getViewerNote(visitorId);
     const safeNet = escapeHtml(formatNetworkType(info.net));
     const safeLang = escapeHtml(String(info.lang || "zh").toUpperCase());
     const safeDpr = escapeHtml(formatDecimal(info.dpr));
     const sessionId = info.sessionId && info.sessionId !== "N/A" ? escapeHtml(info.sessionId) : "";
     return `
-        ${note ? `<span class="tag tag-note">NOTE: ${escapeHtml(note)}</span>` : ""}
         <span class="tag tag-uid">VID: ${escapeHtml(visitorId)}</span>
         ${sessionId ? `<span class="tag tag-session">SID: ${sessionId}</span>` : ""}
         <span class="tag" title="指纹: ${escapeHtml(info.fp)}">FP: ${escapeHtml(info.fp)}</span>
@@ -227,14 +195,9 @@ function buildTimeTags(record) {
 }
 
 function buildRecordHtml(record) {
-    const visitorId = getVisitorId(record.info);
-    const note = getViewerNote(visitorId);
     return `
         <div class="viewer-item record-item">
             ${buildActiveViewerHtml(record)}
-            <div class="record-note-row">
-                <input class="visitor-note-input" data-viewer-note="${escapeHtml(visitorId)}" maxlength="24" value="${escapeHtml(note)}" placeholder="备注，如 张三手机">
-            </div>
         </div>
     `;
 }
@@ -275,22 +238,6 @@ function bindRecordGroupToggles() {
             toggleBtn.innerText = nextExpanded ? "收起" : "展开";
             toggleBtn.setAttribute("aria-expanded", String(nextExpanded));
             if (groupId === "earlier") earlierRecordsExpanded = nextExpanded;
-        };
-    });
-}
-
-function bindViewerNoteInputs() {
-    document.querySelectorAll('[data-viewer-note]').forEach((input) => {
-        input.onchange = () => {
-            setViewerNote(input.dataset.viewerNote, input.value);
-            activeViewerRecords.forEach(updateActiveViewer);
-            renderViewerRecords();
-        };
-        input.onkeydown = (event) => {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                input.blur();
-            }
         };
     });
 }
@@ -369,7 +316,6 @@ function renderViewerRecords() {
         })
     ].join("") || '<div class="empty-state">暂无打开记录</div>';
     bindRecordGroupToggles();
-    bindViewerNoteInputs();
     syncDurationRefreshTimer();
 }
 
