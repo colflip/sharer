@@ -334,7 +334,7 @@ function buildActiveViewerHtml(record) {
                     ${buildInfoTags(info)}
                 </div>
             </div>
-            <div class="viewer-status" style="flex-shrink: 0; font-size: 10.5px; font-weight: 500; color: ${isOnline ? '#34c759' : '#8e8e93'};">
+            <div class="viewer-status" style="flex-shrink: 0; font-weight: 500; color: ${isOnline ? '#34c759' : '#8e8e93'};">
                 ${isOnline ? '在线中' : '已结束'}
             </div>
         </div>
