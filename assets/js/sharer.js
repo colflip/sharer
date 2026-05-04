@@ -321,14 +321,21 @@ function renderViewerRecords() {
 
 function buildActiveViewerHtml(record) {
     const info = record.info;
+    const isOnline = !record.endedAt;
+
     return `
-        <div class="viewer-row">
-            <div class="viewer-main">
-                <div class="dot"></div>
-                <b class="viewer-device-name">${escapeHtml(info.osBrowser)}</b>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <div class="viewer-row" style="flex: 1; min-width: 0;">
+                <div class="viewer-main">
+                    <div class="dot" style="background: ${isOnline ? '#34c759' : '#8e8e93'};"></div>
+                    <b class="viewer-device-name">${escapeHtml(info.osBrowser)}</b>
+                </div>
+                <div class="viewer-details">
+                    ${buildInfoTags(info)}
+                </div>
             </div>
-            <div class="viewer-details">
-                ${buildInfoTags(info)}
+            <div class="viewer-status" style="flex-shrink: 0; font-size: 12px; font-weight: 500; color: ${isOnline ? '#34c759' : '#8e8e93'};">
+                ${isOnline ? '在线中' : '已结束'}
             </div>
         </div>
         <div class="viewer-times">

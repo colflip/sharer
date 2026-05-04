@@ -246,23 +246,24 @@ h2 {
 .viewer-details {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 6px;
     flex-shrink: 0;
 }
 
 .viewer-times {
     display: flex;
     flex-wrap: wrap;
-    gap: 3px;
+    gap: 6px;
     padding-left: 0;
+    margin-top: 2px;
 }
 
 .tag {
-    padding: 2px 4px;
+    padding: 3px 8px;
     background: rgba(255, 255, 255, 0.08);
-    border-radius: 4px;
-    font-size: 10px;
-    color: #999;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #a1a1a6;
     white-space: nowrap;
 }
 
