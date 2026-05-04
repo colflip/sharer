@@ -151,25 +151,24 @@ function buildInfoTags(info) {
     const safeNet = escapeHtml(String(info.net || "unknown").toUpperCase());
     const safeLang = escapeHtml(String(info.lang || "zh").toUpperCase());
     const safeDpr = escapeHtml(formatDecimal(info.dpr));
-    const deviceType = info.deviceType && info.deviceType !== "Device" ? escapeHtml(info.deviceType) : "";
-    const timeZone = info.timeZone && info.timeZone !== "unknown" ? escapeHtml(info.timeZone) : "";
     const sessionId = info.sessionId && info.sessionId !== "N/A" ? escapeHtml(info.sessionId) : "";
     return `
-        <span class="tag tag-uid">访客: ${escapeHtml(info.uid)}</span>
-        ${sessionId ? `<span class="tag tag-session">会话: ${sessionId}</span>` : ""}
-        <span class="tag tag-visits">第 ${escapeHtml(info.visits)} 次访问</span>
-        ${deviceType ? `<span class="tag">${deviceType}</span>` : ""}
+        <span class="tag tag-uid">VID: ${escapeHtml(info.uid)}</span>
+        ${sessionId ? `<span class="tag tag-session">SID: ${sessionId}</span>` : ""}
+        <span class="tag" title="指纹: ${escapeHtml(info.fp)}">FP: ${escapeHtml(info.fp)}</span>
         <span class="tag tag-res">${escapeHtml(info.res)} @${safeDpr}x</span>
         <span class="tag tag-net">${safeNet}</span>
         <span class="tag">${safeLang}</span>
-        ${timeZone ? `<span class="tag">${timeZone}</span>` : ""}
         <span class="tag">${info.theme === 'dark' ? '🌙' : '☀️'}</span>
-        <span class="tag" title="指纹: ${escapeHtml(info.fp)}">FP: ${escapeHtml(info.fp)}</span>
     `;
 }
 
 function buildTimeTags(record) {
+    const info = record.info || {};
+    const timeZone = info.timeZone && info.timeZone !== "unknown" ? escapeHtml(info.timeZone) : "";
     return `
+        <span class="tag tag-visits">第 ${escapeHtml(info.visits || "1")} 次访问</span>
+        ${timeZone ? `<span class="tag">位置: ${timeZone}</span>` : ""}
         <span class="tag">打开: ${escapeHtml(formatTime(record.openedAt))}</span>
         <span class="tag">结束: ${escapeHtml(formatTime(record.endedAt))}</span>
         <span class="tag duration-tag" data-opened-at="${escapeHtml(record.openedAt || "")}" data-ended-at="${escapeHtml(record.endedAt || "")}">连接时长: ${escapeHtml(formatDuration(record.openedAt, record.endedAt))}</span>
@@ -303,14 +302,11 @@ function renderViewerRecords() {
 
 function buildActiveViewerHtml(record) {
     const info = record.info;
-    const deviceLabel = info.deviceType && info.deviceType !== "Device"
-        ? `${info.osBrowser} · ${info.deviceType}`
-        : info.osBrowser;
     return `
         <div class="viewer-row">
             <div class="viewer-main">
                 <div class="dot"></div>
-                <b class="viewer-device-name">${escapeHtml(deviceLabel)}</b>
+                <b class="viewer-device-name">${escapeHtml(info.osBrowser)}</b>
             </div>
             <div class="viewer-details">
                 ${buildInfoTags(info)}
