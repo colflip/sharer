@@ -13,7 +13,7 @@ const OLD_DEFAULT_SHARE_PROMPTS = [
 const SHARE_PROMPT_KEY = "sc_share_prompt";
 const LAST_RECORDS_KEY = "sc_latest_viewer_records_key";
 const VIEWER_RECORDS_CACHE_KEY = "sc_viewer_records_cache";
-const RECENT_RECORD_WINDOW_DAYS = 3;
+const RECENT_RECORD_LIMIT = 10;
 let currentRecordsKey = localStorage.getItem(LAST_RECORDS_KEY) || "";
 let viewerRecords = [];
 const activeViewerRecords = new Map();
@@ -130,14 +130,6 @@ function buildTimeTags(record) {
         <span class="tag">结束: ${escapeHtml(formatTime(record.endedAt))}</span>
         <span class="tag duration-tag" data-opened-at="${escapeHtml(record.openedAt || "")}" data-ended-at="${escapeHtml(record.endedAt || "")}">连接时长: ${escapeHtml(formatDuration(record.openedAt, record.endedAt))}</span>
     `;
-}
-
-function isRecentRecord(record) {
-    const openedAt = new Date(record.openedAt).getTime();
-    if (Number.isNaN(openedAt)) return false;
-
-    const ageMs = Date.now() - openedAt;
-    return ageMs >= 0 && ageMs <= RECENT_RECORD_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 }
 
 function buildRecordHtml(record) {
@@ -258,8 +250,8 @@ function renderViewerRecords() {
     }
 
     const sortedRecords = viewerRecords.slice().reverse();
-    const recentRecords = sortedRecords.filter(isRecentRecord);
-    const earlierRecords = sortedRecords.filter((record) => !isRecentRecord(record));
+    const recentRecords = sortedRecords.slice(0, RECENT_RECORD_LIMIT);
+    const earlierRecords = sortedRecords.slice(RECENT_RECORD_LIMIT);
 
     panel.style.display = "block";
     container.innerHTML = [
@@ -440,13 +432,13 @@ document.getElementById('clearRecordsBtn').onclick = () => {
 
 // 清晰度配置项 (升级版)
 const QUALITY_CONFIGS = {
-    fluent: { width: 960, height: 540, frameRate: 15, bitrateMin: 500, bitrateMax: 1000 },
     standard: { width: 1280, height: 720, frameRate: 25, bitrateMin: 800, bitrateMax: 2000 },
     high: { width: 1920, height: 1080, frameRate: 30, bitrateMin: 1500, bitrateMax: 4000 },
     ultra: { width: 1920, height: 1080, frameRate: 60, bitrateMin: 2000, bitrateMax: 8000 },
-    pro_2k: { width: 2560, height: 1440, frameRate: 30, bitrateMin: 3000, bitrateMax: 10000 }
+    pro_2k: { width: 2560, height: 1440, frameRate: 30, bitrateMin: 3000, bitrateMax: 10000 },
+    pro_4k: { width: 3840, height: 2160, frameRate: 30, bitrateMin: 6000, bitrateMax: 20000 }
 };
-let selectedQuality = "standard";
+let selectedQuality = "pro_2k";
 
 async function applyScreenQuality(qualityKey) {
     if (!screenTrack) return;
@@ -468,15 +460,15 @@ function setQualityActive(qualityKey) {
 }
 
 async function autoDowngradeForWeakNetwork() {
-    if (!screenTrack || isScreenPaused || selectedQuality === "fluent") return;
+    if (!screenTrack || isScreenPaused || selectedQuality === "standard") return;
     const now = Date.now();
     if (now - lastAutoDowngradeAt < 30000) return;
     lastAutoDowngradeAt = now;
-    selectedQuality = "fluent";
+    selectedQuality = "standard";
     setQualityActive(selectedQuality);
     try {
         await applyScreenQuality(selectedQuality);
-        document.getElementById('status').innerText = "🟡 网络较弱，已自动降至 540P";
+        document.getElementById('status').innerText = "🟡 网络较弱，已自动降至 720P";
     } catch (err) {
         console.warn("自动降级失败:", err);
     }
