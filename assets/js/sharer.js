@@ -136,13 +136,11 @@ function buildRecordHtml(record) {
     const info = record.info || {};
     return `
         <div class="record-item">
-            <div class="record-title">
-                <b class="record-device-name">${escapeHtml(info.osBrowser || "未知设备")}</b>
-                <span class="tag">${record.endedAt ? "已结束" : "在线中"}</span>
+            <div class="record-meta">
+                ${buildInfoTags(info)}
             </div>
-            <div class="record-meta">${buildInfoTags(info)}</div>
-            <div class="record-times">
-                ${buildTimeTags(record)}
+            <div class="record-status-line">
+                <span class="tag">${record.endedAt ? "已结束" : "在线中"}</span>
             </div>
         </div>
     `;
@@ -159,7 +157,7 @@ function buildRecordGroupHtml(title, records, options = {}) {
     return `
         <section class="record-group${collapsed ? " collapsed" : ""}" data-record-group="${escapeHtml(options.toggleId || title)}">
             <div class="record-group-header">
-                <div>
+                <div class="record-group-summary">
                     <h4>${escapeHtml(title)}</h4>
                     <span>${records.length} 条</span>
                 </div>
@@ -432,6 +430,7 @@ document.getElementById('clearRecordsBtn').onclick = () => {
 
 // 清晰度配置项 (升级版)
 const QUALITY_CONFIGS = {
+    fluent: { width: 960, height: 540, frameRate: 15, bitrateMin: 500, bitrateMax: 1000 },
     standard: { width: 1280, height: 720, frameRate: 25, bitrateMin: 800, bitrateMax: 2000 },
     high: { width: 1920, height: 1080, frameRate: 30, bitrateMin: 1500, bitrateMax: 4000 },
     ultra: { width: 1920, height: 1080, frameRate: 60, bitrateMin: 2000, bitrateMax: 8000 },
@@ -460,15 +459,15 @@ function setQualityActive(qualityKey) {
 }
 
 async function autoDowngradeForWeakNetwork() {
-    if (!screenTrack || isScreenPaused || selectedQuality === "standard") return;
+    if (!screenTrack || isScreenPaused || selectedQuality === "fluent") return;
     const now = Date.now();
     if (now - lastAutoDowngradeAt < 30000) return;
     lastAutoDowngradeAt = now;
-    selectedQuality = "standard";
+    selectedQuality = "fluent";
     setQualityActive(selectedQuality);
     try {
         await applyScreenQuality(selectedQuality);
-        document.getElementById('status').innerText = "🟡 网络较弱，已自动降至 720P";
+        document.getElementById('status').innerText = "🟡 网络较弱，已自动降至 540P";
     } catch (err) {
         console.warn("自动降级失败:", err);
     }
@@ -512,7 +511,7 @@ document.querySelectorAll('#qualitySelector .control-item').forEach(item => {
 });
 
 // 时长选择逻辑
-let selectedDuration = 20;
+let selectedDuration = 15;
 document.querySelectorAll('#durationSelector .control-item').forEach(item => {
     item.onclick = () => {
         if (document.getElementById('generateBtn').disabled && !screenTrack) return; // 只有在未开始投屏时才禁用

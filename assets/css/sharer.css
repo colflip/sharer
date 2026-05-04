@@ -11,7 +11,7 @@ body {
 
 .container {
     width: 100%;
-    max-width: 600px;
+    max-width: 760px;
     background: #1c1c1e;
     padding: 35px 30px;
     border-radius: 24px;
@@ -72,7 +72,9 @@ h2 {
 .share-actions {
     display: flex;
     gap: 10px;
-    margin-top: 5px;
+    width: 100%;
+    max-width: 600px;
+    margin: 5px auto 0;
     scroll-margin-top: 18px;
 }
 
@@ -305,6 +307,7 @@ h2 {
 
 .control-item {
     flex: 1;
+    min-width: 0;
     padding: 12px 0;
     text-align: center;
     font-size: 14px;
@@ -459,9 +462,16 @@ h2 {
 
 .record-group-header span {
     display: inline-block;
-    margin-top: 3px;
     color: #636366;
     font-size: 11px;
+    white-space: nowrap;
+}
+
+.record-group-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
 }
 
 .record-group.collapsed .record-group-body {
@@ -481,30 +491,16 @@ h2 {
     border-bottom: none;
 }
 
-.record-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 8px;
-    font-size: 13px;
-}
-
-.record-device-name {
-    color: #fff;
-}
-
 .record-meta {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
 
-.record-times {
+.record-status-line {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
+    justify-content: flex-end;
+    margin-top: 7px;
 }
 
 .empty-state {
