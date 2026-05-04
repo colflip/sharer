@@ -168,7 +168,7 @@ function buildTimeTags(record) {
     const timeZone = info.timeZone && info.timeZone !== "unknown" ? escapeHtml(info.timeZone) : "";
     return `
         <span class="tag tag-visits">第 ${escapeHtml(info.visits || "1")} 次访问</span>
-        ${timeZone ? `<span class="tag">位置: ${timeZone}</span>` : ""}
+        ${timeZone ? `<span class="tag">${timeZone}</span>` : ""}
         <span class="tag">打开: ${escapeHtml(formatTime(record.openedAt))}</span>
         <span class="tag">结束: ${escapeHtml(formatTime(record.endedAt))}</span>
         <span class="tag duration-tag" data-opened-at="${escapeHtml(record.openedAt || "")}" data-ended-at="${escapeHtml(record.endedAt || "")}">连接时长: ${escapeHtml(formatDuration(record.openedAt, record.endedAt))}</span>
