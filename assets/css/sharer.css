@@ -198,7 +198,7 @@ h2 {
 }
 
 .viewer-item {
-    font-size: 12px;
+    font-size: 10px;
     padding: 10px 15px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
@@ -262,7 +262,7 @@ h2 {
     padding: 3px 8px;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 9px;
     color: #a1a1a6;
     white-space: nowrap;
 }
