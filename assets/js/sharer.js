@@ -650,7 +650,6 @@ document.getElementById('generateBtn').onclick = async () => {
         renderViewerRecords();
 
         document.getElementById('urlContainer').innerText = watchUrl;
-        document.getElementById('pwdCode').innerText = password;
         document.getElementById('shareInfo').style.display = 'block';
         document.getElementById('viewerList').style.display = 'block';
         document.getElementById('viewerRecordPanel').style.display = 'block';

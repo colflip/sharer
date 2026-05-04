@@ -11,7 +11,7 @@ body {
 
 .container {
     width: 100%;
-    max-width: 600px;
+    max-width: 630px;
     background: #1c1c1e;
     padding: 35px 30px;
     border-radius: 24px;
@@ -161,15 +161,6 @@ h2 {
     padding: 10px;
     border-radius: 6px;
     margin-bottom: 10px;
-}
-
-.password-line {
-    margin: 5px 0;
-}
-
-#pwdCode {
-    font-size: 24px;
-    color: #fff;
 }
 
 .copy-btn {
