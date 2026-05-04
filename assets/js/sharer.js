@@ -133,15 +133,9 @@ function buildTimeTags(record) {
 }
 
 function buildRecordHtml(record) {
-    const info = record.info || {};
     return `
-        <div class="record-item">
-            <div class="record-meta">
-                ${buildInfoTags(info)}
-            </div>
-            <div class="record-status-line">
-                <span class="tag">${record.endedAt ? "已结束" : "在线中"}</span>
-            </div>
+        <div class="viewer-item record-item">
+            ${buildActiveViewerHtml(record)}
         </div>
     `;
 }
