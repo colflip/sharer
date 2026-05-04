@@ -227,43 +227,13 @@ function buildTimeTags(record) {
 }
 
 function buildRecordHtml(record) {
+    const visitorId = getVisitorId(record.info);
+    const note = getViewerNote(visitorId);
     return `
         <div class="viewer-item record-item">
             ${buildActiveViewerHtml(record)}
-        </div>
-    `;
-}
-
-function groupRecordsByVisitor(records) {
-    const groups = [];
-    const groupMap = new Map();
-    records.forEach((record) => {
-        const visitorId = getVisitorId(record.info);
-        let group = groupMap.get(visitorId);
-        if (!group) {
-            group = { visitorId, info: record.info || {}, records: [] };
-            groupMap.set(visitorId, group);
-            groups.push(group);
-        }
-        group.records.push(record);
-    });
-    return groups;
-}
-
-function buildVisitorRecordGroupHtml(group) {
-    const note = getViewerNote(group.visitorId);
-    const latestInfo = group.info || {};
-    return `
-        <div class="visitor-record-group" data-visitor-id="${escapeHtml(group.visitorId)}">
-            <div class="visitor-record-header">
-                <div class="visitor-record-title">
-                    <b>${escapeHtml(latestInfo.osBrowser || "未知设备")}</b>
-                    <span>${group.records.length} sessions</span>
-                </div>
-                <input class="visitor-note-input" data-viewer-note="${escapeHtml(group.visitorId)}" maxlength="24" value="${escapeHtml(note)}" placeholder="备注，如 张三手机">
-            </div>
-            <div class="visitor-record-sessions">
-                ${group.records.map(buildRecordHtml).join("")}
+            <div class="record-note-row">
+                <input class="visitor-note-input" data-viewer-note="${escapeHtml(visitorId)}" maxlength="24" value="${escapeHtml(note)}" placeholder="备注，如 张三手机">
             </div>
         </div>
     `;
@@ -287,7 +257,7 @@ function buildRecordGroupHtml(title, records, options = {}) {
                 ${toggleHtml}
             </div>
             <div class="record-group-body">
-                ${groupRecordsByVisitor(records).map(buildVisitorRecordGroupHtml).join("")}
+                ${records.map(buildRecordHtml).join("")}
             </div>
         </section>
     `;
