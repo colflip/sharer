@@ -171,11 +171,11 @@ function buildInfoTags(info) {
     const safeDpr = escapeHtml(formatDecimal(info.dpr));
     const sessionId = info.sessionId && info.sessionId !== "N/A" ? escapeHtml(info.sessionId) : "";
     return `
-        <span class="tag tag-uid">VID: ${escapeHtml(visitorId)}</span>
-        ${sessionId ? `<span class="tag tag-session">SID: ${sessionId}</span>` : ""}
-        <span class="tag" title="指纹: ${escapeHtml(info.fp)}">FP: ${escapeHtml(info.fp)}</span>
-        <span class="tag tag-support">SUP: ${escapeHtml(getBrowserSupport(info))}</span>
-        <span class="tag tag-net">NET: ${safeNet}</span>
+        <span class="tag tag-uid" title="访客 ID">${escapeHtml(visitorId)}</span>
+        ${sessionId ? `<span class="tag tag-session" title="会话 ID">${sessionId}</span>` : ""}
+        <span class="tag" title="指纹: ${escapeHtml(info.fp)}">${escapeHtml(info.fp)}</span>
+        <span class="tag tag-support" title="浏览器支持度">${escapeHtml(getBrowserSupport(info))}</span>
+        <span class="tag tag-net" title="网络类型">${safeNet}</span>
         <span class="tag tag-res">${escapeHtml(info.res)} @${safeDpr}x</span>
         <span class="tag">${safeLang}</span>
         <span class="tag">${info.theme === 'dark' ? '🌙' : '☀️'}</span>
