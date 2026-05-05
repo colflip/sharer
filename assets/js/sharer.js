@@ -203,26 +203,35 @@ function buildRecordHtml(record) {
 }
 
 function buildRecordGroupHtml(title, records, options = {}) {
-    if (!records.length) return "";
+    if (!records.length && !options.showEmpty) return "";
 
     const collapsed = Boolean(options.collapsed);
     const toggleHtml = options.toggleId
         ? `<button class="mini-btn record-group-toggle" data-toggle-record-group="${escapeHtml(options.toggleId)}" type="button">${collapsed ? "展开" : "收起"}</button>`
         : "";
+    
+    const clearHtml = options.showClear
+        ? `<button class="mini-btn" id="clearRecordsBtn" type="button">清空</button>`
+        : "";
+
+    const actionsHtml = (toggleHtml || clearHtml)
+        ? `<div class="panel-actions">${toggleHtml}${clearHtml}</div>`
+        : "";
+
+    const bodyHtml = records.length 
+        ? records.map(buildRecordHtml).join("")
+        : `<div class="empty-state">暂无打开记录</div>`;
 
     return `
-        <section class="record-group${collapsed ? " collapsed" : ""}" data-record-group="${escapeHtml(options.toggleId || title)}">
-            <div class="record-group-header">
-                <div class="record-group-summary">
-                    <h4>${escapeHtml(title)}</h4>
-                    <span>${records.length} 条</span>
-                </div>
-                ${toggleHtml}
+        <div class="viewer-panel ${collapsed ? "collapsed" : ""}" data-record-group="${escapeHtml(options.toggleId || title)}" style="display: block;">
+            <div class="panel-header">
+                <h3>${escapeHtml(title)} <span>${records.length}条</span></h3>
+                ${actionsHtml}
             </div>
-            <div class="record-group-body">
-                ${records.map(buildRecordHtml).join("")}
+            <div class="panel-body">
+                ${bodyHtml}
             </div>
-        </section>
+        </div>
     `;
 }
 
@@ -292,13 +301,16 @@ function loadSavedViewerRecords() {
 }
 
 function renderViewerRecords() {
-    const panel = document.getElementById("viewerRecordPanel");
-    const container = document.getElementById("recordsContainer");
-    if (!panel || !container) return;
+    const container = document.getElementById("allRecordsContainer");
+    if (!container) return;
 
     if (!viewerRecords.length) {
-        container.innerHTML = '<div class="empty-state">暂无打开记录</div>';
-        panel.style.display = currentRecordsKey ? "block" : "none";
+        if (currentRecordsKey) {
+            container.innerHTML = buildRecordGroupHtml("近期设备记录", [], { showEmpty: true, showClear: true, toggleId: "recent", collapsed: false });
+            bindRecordGroupToggles();
+        } else {
+            container.innerHTML = "";
+        }
         syncDurationRefreshTimer();
         return;
     }
@@ -307,14 +319,18 @@ function renderViewerRecords() {
     const recentRecords = sortedRecords.slice(0, RECENT_RECORD_LIMIT);
     const earlierRecords = sortedRecords.slice(RECENT_RECORD_LIMIT);
 
-    panel.style.display = "block";
     container.innerHTML = [
-        buildRecordGroupHtml("近期记录", recentRecords),
-        buildRecordGroupHtml("更早记录", earlierRecords, {
+        buildRecordGroupHtml("近期设备记录", recentRecords, {
+            showEmpty: true,
+            showClear: true,
+            toggleId: "recent",
+            collapsed: false
+        }),
+        buildRecordGroupHtml("更早设备记录", earlierRecords, {
             collapsed: !earlierRecordsExpanded,
             toggleId: "earlier"
         })
-    ].join("") || '<div class="empty-state">暂无打开记录</div>';
+    ].join("");
     bindRecordGroupToggles();
     syncDurationRefreshTimer();
 }
@@ -484,20 +500,21 @@ sharePromptInput.addEventListener('input', function() {
 
 loadSavedViewerRecords();
 setupPanelToggle("viewerList", true);
-setupPanelToggle("viewerRecordPanel", false);
 
-document.getElementById('clearRecordsBtn').onclick = () => {
-    viewerRecords = Array.from(activeViewerRecords.values());
-    if (viewerRecords.length) {
-        saveViewerRecords();
-    } else if (currentRecordsKey) {
-        localStorage.removeItem(currentRecordsKey);
-        localStorage.removeItem(LAST_RECORDS_KEY);
-        localStorage.removeItem(VIEWER_RECORDS_CACHE_KEY);
-        currentRecordsKey = "";
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'clearRecordsBtn') {
+        viewerRecords = Array.from(activeViewerRecords.values());
+        if (viewerRecords.length) {
+            saveViewerRecords();
+        } else if (currentRecordsKey) {
+            localStorage.removeItem(currentRecordsKey);
+            localStorage.removeItem(LAST_RECORDS_KEY);
+            localStorage.removeItem(VIEWER_RECORDS_CACHE_KEY);
+            currentRecordsKey = "";
+        }
+        renderViewerRecords();
     }
-    renderViewerRecords();
-};
+});
 
 // 清晰度配置项 (升级版)
 const QUALITY_CONFIGS = {
@@ -729,8 +746,6 @@ document.getElementById('generateBtn').onclick = async () => {
         document.getElementById('urlContainer').innerText = watchUrl;
         document.getElementById('shareInfo').style.display = 'block';
         document.getElementById('viewerList').style.display = 'block';
-        document.getElementById('viewerRecordPanel').style.display = 'block';
-        setPanelExpanded("viewerRecordPanel", true);
 
         const promptPreview = document.getElementById('promptPreview');
         if (sharePrompt) {
