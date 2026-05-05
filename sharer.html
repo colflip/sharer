@@ -72,7 +72,16 @@
             <div id="viewersContainer" class="panel-body"></div>
         </div>
 
-        <div id="allRecordsContainer"></div>
+        <div id="viewerRecordPanel" class="viewer-panel collapsed">
+            <div class="panel-header">
+                <h3>设备记录</h3>
+                <div class="panel-actions">
+                    <button class="mini-btn" data-toggle-panel="viewerRecordPanel" type="button">展开</button>
+                    <button class="mini-btn" id="clearRecordsBtn" type="button">清空</button>
+                </div>
+            </div>
+            <div id="recordsContainer" class="panel-body"></div>
+        </div>
     </div>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/agora-loader.js"></script>

@@ -197,12 +197,6 @@ h2 {
     font-weight: 500;
 }
 
-.viewer-panel h3 span {
-    font-size: 12px;
-    color: #636366;
-    font-weight: normal;
-}
-
 .viewer-item {
     font-size: 10.5px;
     padding: 10px 15px;
@@ -477,8 +471,8 @@ h2 {
 
 .record-group-header span {
     display: inline-block;
-    color: #636366;
-    font-size: 11px;
+    color: rgba(99, 99, 102, 0.6);
+    font-size: 9px;
     white-space: nowrap;
 }
 
