@@ -10,6 +10,26 @@
 </head>
 
 <body>
+    <aside id="shareSideStats" class="share-side-panel share-side-stats" aria-label="分享状态概览">
+        <div class="side-panel-inner">
+            <div class="side-stat-block">
+                <span class="side-stat-label">清晰度</span>
+                <strong id="shareQualityText">2K</strong>
+                <span id="shareQualityMeta">2560×1440 · 30fps</span>
+            </div>
+            <div class="side-stat-block">
+                <span class="side-stat-label">码率</span>
+                <strong id="shareBitrateText">标准</strong>
+                <span id="shareBitrateMeta">3-10Mbps</span>
+            </div>
+            <div class="side-stat-block">
+                <span class="side-stat-label">时长</span>
+                <strong id="shareDurationText">15m</strong>
+                <span id="shareDurationMeta">剩余 00:15:00</span>
+            </div>
+        </div>
+    </aside>
+
     <div class="container">
         <h2>ScreenCast <span class="app-subtitle">| 极简投屏</span></h2>
 
@@ -25,9 +45,16 @@
         <div class="segmented-control" id="qualitySelector">
             <div class="control-item" data-q="fluent">540P</div>
             <div class="control-item" data-q="standard">720P</div>
-            <div class="control-item" data-q="high">1K</div>
+            <div class="control-item" data-q="high">1080P</div>
             <div class="control-item active" data-q="pro_2k">2K</div>
             <div class="control-item" data-q="pro_4k">4K</div>
+        </div>
+
+        <div class="segmented-control" id="bitrateSelector">
+            <div class="control-item" data-bitrate="low">省流</div>
+            <div class="control-item active" data-bitrate="standard">标准</div>
+            <div class="control-item" data-bitrate="high">高码率</div>
+            <div class="control-item" data-bitrate="max">极致</div>
         </div>
 
         <div class="segmented-control" id="durationSelector">
@@ -76,6 +103,18 @@
             <div id="recordsContainer" class="panel-body"></div>
         </div>
     </div>
+
+    <aside id="shareSidePreview" class="share-side-panel share-side-preview" aria-label="实时分享缩略图">
+        <div class="side-panel-inner">
+            <div class="share-preview-header">
+                <span>实时显示</span>
+            </div>
+            <div id="sharePreviewVideo" class="share-preview-video">
+                <span>预览将在分享开始后显示</span>
+            </div>
+        </div>
+    </aside>
+
     <script src="assets/js/config.js"></script>
     <script src="assets/js/agora-loader.js"></script>
     <script src="assets/js/sharer.js"></script>

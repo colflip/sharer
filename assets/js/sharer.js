@@ -453,14 +453,120 @@ function formatRemainingTime() {
     return `${h}:${m}:${s}`;
 }
 
+function getSelectedDurationLabel() {
+    if (!currentShareHasLimit) return "不限时长";
+    if (selectedDuration === -1) return "自定义";
+    if (selectedDuration >= 60) {
+        const hours = selectedDuration / 60;
+        return Number.isInteger(hours) ? `${hours}h` : `${selectedDuration}m`;
+    }
+    return `${selectedDuration}m`;
+}
+
+function updateShareOverview() {
+    const qualityText = document.getElementById('shareQualityText');
+    const qualityMeta = document.getElementById('shareQualityMeta');
+    const bitrateText = document.getElementById('shareBitrateText');
+    const bitrateMeta = document.getElementById('shareBitrateMeta');
+    const durationText = document.getElementById('shareDurationText');
+    const durationMeta = document.getElementById('shareDurationMeta');
+    const config = getEncoderConfig(selectedQuality);
+
+    if (qualityText) {
+        qualityText.innerText = QUALITY_LABELS[selectedQuality] || selectedQuality;
+    }
+    if (qualityMeta && config) {
+        qualityMeta.innerText = `${config.width}×${config.height} · ${config.frameRate}fps`;
+    }
+    if (bitrateText) {
+        bitrateText.innerText = BITRATE_LABELS[selectedBitrate] || selectedBitrate;
+    }
+    if (bitrateMeta && config) {
+        bitrateMeta.innerText = `${formatDecimal(config.bitrateMin / 1000, 1)}-${formatDecimal(config.bitrateMax / 1000, 1)}Mbps`;
+    }
+    if (durationText) {
+        durationText.innerText = getSelectedDurationLabel();
+    }
+    if (durationMeta) {
+        durationMeta.innerText = currentShareHasLimit
+            ? `剩余 ${formatRemainingTime()}`
+            : "当前分享没有自动结束时间";
+    }
+}
+
+function getScreenTrackDimensions() {
+    const mediaTrack = typeof screenTrack?.getMediaStreamTrack === "function"
+        ? screenTrack.getMediaStreamTrack()
+        : null;
+    const settings = typeof mediaTrack?.getSettings === "function" ? mediaTrack.getSettings() : {};
+    const width = Number(settings.width) || 16;
+    const height = Number(settings.height) || 9;
+    return { width, height };
+}
+
+function syncShareSidePanelTop() {
+    const shareInfo = document.getElementById('shareInfo');
+    if (!shareInfo || shareInfo.style.display === 'none') return;
+    const top = Math.max(30, Math.round(shareInfo.getBoundingClientRect().top));
+    document.documentElement.style.setProperty("--share-side-top", `${top}px`);
+}
+
+function setShareSidePanelsVisible(visible) {
+    document.getElementById('shareSideStats')?.classList.toggle('active', visible);
+    document.getElementById('shareSidePreview')?.classList.toggle('active', visible);
+    if (visible) requestAnimationFrame(syncShareSidePanelTop);
+}
+
+function resetSharePreview() {
+    const previewEl = document.getElementById('sharePreviewVideo');
+    if (!previewEl) return;
+    previewEl.removeAttribute("style");
+    previewEl.innerHTML = '<span>预览将在分享开始后显示</span>';
+    setShareSidePanelsVisible(false);
+}
+
+function sizeSharePreview(previewEl) {
+    if (!screenTrack || !previewEl) return;
+    const { width, height } = getScreenTrackDimensions();
+    const ratio = width / height;
+    const previewPanel = document.getElementById('shareSidePreview');
+    const sideWidth = Math.floor(previewPanel?.getBoundingClientRect().width || 300);
+    const previewWidth = ratio < 1
+        ? Math.floor(sideWidth * 0.5)
+        : sideWidth;
+    previewEl.style.aspectRatio = `${width} / ${height}`;
+    previewEl.style.width = `${previewWidth}px`;
+    previewEl.style.minHeight = "0";
+}
+
+function mountSharePreview() {
+    const previewEl = document.getElementById('sharePreviewVideo');
+    if (!screenTrack || !previewEl || typeof screenTrack.play !== "function") return;
+
+    previewEl.innerHTML = "";
+    sizeSharePreview(previewEl);
+    try {
+        screenTrack.play(previewEl, { fit: "contain" });
+    } catch (err) {
+        console.warn("本地缩略图预览失败:", err);
+        previewEl.innerHTML = '<span>当前浏览器无法显示本地预览</span>';
+    }
+}
+
+window.addEventListener('resize', () => {
+    syncShareSidePanelTop();
+    sizeSharePreview(document.getElementById('sharePreviewVideo'));
+});
+window.addEventListener('scroll', syncShareSidePanelTop, { passive: true });
+
 function updateShareStatus() {
     const statusEl = document.getElementById('status');
     if (!statusEl) return;
 
-    const timeText = currentShareHasLimit ? `剩余时间 ${formatRemainingTime()}` : "不限时长";
     statusEl.innerText = isScreenPaused
-        ? `⏸️ 已暂停投屏 - ${timeText}`
-        : `🟢 分享中 - ${timeText}`;
+        ? "⏸️ 已暂停投屏"
+        : "🟢 分享中";
+    updateShareOverview();
 }
 
 function appendShareNotice(message) {
@@ -525,15 +631,50 @@ const QUALITY_CONFIGS = {
     fluent: { width: 960, height: 540, frameRate: 15, bitrateMin: 500, bitrateMax: 1000 },
     standard: { width: 1280, height: 720, frameRate: 25, bitrateMin: 800, bitrateMax: 2000 },
     high: { width: 1920, height: 1080, frameRate: 30, bitrateMin: 1500, bitrateMax: 4000 },
-    ultra: { width: 1920, height: 1080, frameRate: 60, bitrateMin: 2000, bitrateMax: 8000 },
     pro_2k: { width: 2560, height: 1440, frameRate: 30, bitrateMin: 3000, bitrateMax: 10000 },
     pro_4k: { width: 3840, height: 2160, frameRate: 30, bitrateMin: 6000, bitrateMax: 20000 }
 };
+const QUALITY_LABELS = {
+    fluent: "540P",
+    standard: "720P",
+    high: "1080P",
+    pro_2k: "2K",
+    pro_4k: "4K"
+};
+const FALLBACK_QUALITY_KEYS = new Set(["fluent", "standard", "high"]);
+const BITRATE_PRESETS = {
+    low: { minScale: 0.65, maxScale: 0.65 },
+    standard: { minScale: 1, maxScale: 1 },
+    high: { minScale: 1.25, maxScale: 1.35 },
+    max: { minScale: 1.6, maxScale: 1.8 }
+};
+const BITRATE_LABELS = {
+    low: "省流",
+    standard: "标准",
+    high: "高码率",
+    max: "极致"
+};
 let selectedQuality = "pro_2k";
+let selectedBitrate = "standard";
+const qualitySupport = new Map();
+
+function getEncoderConfig(qualityKey = selectedQuality) {
+    const config = QUALITY_CONFIGS[qualityKey];
+    if (!config) return null;
+    const bitratePreset = BITRATE_PRESETS[selectedBitrate] || BITRATE_PRESETS.standard;
+
+    return {
+        width: config.width,
+        height: config.height,
+        frameRate: config.frameRate,
+        bitrateMin: Math.round(config.bitrateMin * bitratePreset.minScale),
+        bitrateMax: Math.round(config.bitrateMax * bitratePreset.maxScale)
+    };
+}
 
 async function applyScreenQuality(qualityKey) {
     if (!screenTrack) return;
-    const config = QUALITY_CONFIGS[qualityKey];
+    const config = getEncoderConfig(qualityKey);
     if (!config) return;
     await screenTrack.setEncoderConfiguration({
         width: config.width,
@@ -542,12 +683,98 @@ async function applyScreenQuality(qualityKey) {
         bitrateMin: config.bitrateMin,
         bitrateMax: config.bitrateMax
     });
+    updateShareOverview();
 }
 
 function setQualityActive(qualityKey) {
     document.querySelectorAll('#qualitySelector .control-item').forEach(item => {
-        item.classList.toggle('active', item.getAttribute('data-q') === qualityKey);
+        const itemQuality = item.getAttribute('data-q');
+        item.classList.toggle('active', itemQuality === qualityKey && !item.classList.contains('disabled'));
     });
+}
+
+function setQualityDisabled(qualityKey, reason) {
+    const item = document.querySelector(`#qualitySelector .control-item[data-q="${qualityKey}"]`);
+    if (!item) return;
+    const disabled = Boolean(reason);
+    item.classList.toggle('disabled', disabled);
+    item.setAttribute('aria-disabled', String(disabled));
+    item.title = disabled ? reason : "";
+    qualitySupport.set(qualityKey, { disabled, reason: reason || "" });
+}
+
+function isQualityDisabled(qualityKey) {
+    return Boolean(qualitySupport.get(qualityKey)?.disabled);
+}
+
+function selectBestAvailableQuality(preferredQuality = selectedQuality) {
+    const ordered = ["pro_4k", "pro_2k", "high", "standard", "fluent"];
+    if (!isQualityDisabled(preferredQuality)) return preferredQuality;
+    return ordered.find((qualityKey) => !isQualityDisabled(qualityKey)) || "fluent";
+}
+
+async function getMediaCapability(config) {
+    if (!navigator.mediaCapabilities || typeof navigator.mediaCapabilities.encodingInfo !== "function") {
+        return null;
+    }
+
+    try {
+        return await navigator.mediaCapabilities.encodingInfo({
+            type: "webrtc",
+            video: {
+                contentType: "video/VP8",
+                width: config.width,
+                height: config.height,
+                bitrate: config.bitrateMax * 1000,
+                framerate: config.frameRate
+            }
+        });
+    } catch (err) {
+        console.warn("清晰度能力检测失败:", err);
+        return null;
+    }
+}
+
+function getHardwareLimitReason(config) {
+    const cores = navigator.hardwareConcurrency || 0;
+    const memory = navigator.deviceMemory || 0;
+    const pixels = config.width * config.height;
+
+    if (pixels >= 3840 * 2160 && ((cores && cores < 8) || (memory && memory < 8))) {
+        return "当前设备性能信息偏低，已关闭 4K 选项";
+    }
+    if (config.frameRate >= 60 && cores && cores < 6) {
+        return "当前设备 CPU 核心数偏低，已关闭高帧率选项";
+    }
+    return "";
+}
+
+async function refreshQualitySupport() {
+    const checks = await Promise.all(Object.keys(QUALITY_CONFIGS).map(async (qualityKey) => {
+        const encoderConfig = getEncoderConfig(qualityKey);
+        const capability = await getMediaCapability(encoderConfig);
+        let reason = "";
+
+        if (capability && capability.supported === false) {
+            reason = "当前浏览器/设备不支持该清晰度编码";
+        } else if (capability && capability.smooth === false) {
+            reason = "当前设备预计无法流畅分享该清晰度";
+        } else if (!capability) {
+            reason = getHardwareLimitReason(encoderConfig);
+        }
+        if (FALLBACK_QUALITY_KEYS.has(qualityKey)) reason = "";
+
+        return [qualityKey, reason];
+    }));
+
+    checks.forEach(([qualityKey, reason]) => setQualityDisabled(qualityKey, reason));
+
+    const nextQuality = selectBestAvailableQuality(selectedQuality);
+    if (nextQuality !== selectedQuality) {
+        selectedQuality = nextQuality;
+        setQualityActive(selectedQuality);
+        updateShareOverview();
+    }
 }
 
 async function autoDowngradeForWeakNetwork() {
@@ -559,7 +786,7 @@ async function autoDowngradeForWeakNetwork() {
     setQualityActive(selectedQuality);
     try {
         await applyScreenQuality(selectedQuality);
-        document.getElementById('status').innerText = "🟡 网络较弱，已自动降至 1K";
+        document.getElementById('status').innerText = "🟡 网络较弱，已自动降至 1080P";
     } catch (err) {
         console.warn("自动降级失败:", err);
     }
@@ -587,8 +814,11 @@ function bindClientHealthEvents(statusEl) {
 document.querySelectorAll('#qualitySelector .control-item').forEach(item => {
     item.onclick = async () => {
         if (document.getElementById('generateBtn').disabled && !screenTrack) return; // 只有在未开始投屏时才禁用
-        selectedQuality = item.getAttribute('data-q');
+        const nextQuality = item.getAttribute('data-q');
+        if (isQualityDisabled(nextQuality)) return;
+        selectedQuality = nextQuality;
         setQualityActive(selectedQuality);
+        updateShareOverview();
 
         // 如果正在投屏，动态应用新配置
         if (screenTrack) {
@@ -597,6 +827,30 @@ document.querySelectorAll('#qualitySelector .control-item').forEach(item => {
                 console.log("清晰度已动态切换为:", selectedQuality);
             } catch (e) {
                 console.error("动态切换清晰度失败:", e);
+            }
+        }
+    };
+});
+
+refreshQualitySupport();
+
+// 码率选择逻辑
+document.querySelectorAll('#bitrateSelector .control-item').forEach(item => {
+    item.onclick = async () => {
+        if (document.getElementById('generateBtn').disabled && !screenTrack) return;
+        selectedBitrate = item.getAttribute('data-bitrate');
+        document.querySelectorAll('#bitrateSelector .control-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        await refreshQualitySupport();
+
+        if (screenTrack) {
+            try {
+                selectedQuality = selectBestAvailableQuality(selectedQuality);
+                setQualityActive(selectedQuality);
+                await applyScreenQuality(selectedQuality);
+                console.log("码率已动态切换为:", selectedBitrate);
+            } catch (e) {
+                console.error("动态切换码率失败:", e);
             }
         }
     };
@@ -713,7 +967,7 @@ document.getElementById('generateBtn').onclick = async () => {
         bindClientHealthEvents(status);
 
         // 应用选中的清晰度配置 (开启 detail 模式优化画质)
-        const config = QUALITY_CONFIGS[selectedQuality];
+        const config = getEncoderConfig(selectedQuality);
         
         try {
             screenTrack = await AgoraRTC.createScreenVideoTrack({
@@ -751,6 +1005,8 @@ document.getElementById('generateBtn').onclick = async () => {
         document.getElementById('shareInfo').style.display = 'block';
         document.getElementById('viewerList').style.display = 'block';
         document.getElementById('viewerRecordPanel').style.display = 'block';
+        setShareSidePanelsVisible(true);
+        mountSharePreview();
 
         const promptPreview = document.getElementById('promptPreview');
         if (sharePrompt) {
@@ -891,6 +1147,7 @@ document.getElementById('generateBtn').onclick = async () => {
             screenTrack.stop();
             screenTrack.close();
         }
+        resetSharePreview();
         if (client) await client.leave().catch(() => {});
     }
 };
@@ -916,6 +1173,7 @@ async function cleanup() {
         screenTrack.close();
         screenTrack = null;
     }
+    resetSharePreview();
     if (client) {
         await client.leave().catch(() => {});
         client = null;
