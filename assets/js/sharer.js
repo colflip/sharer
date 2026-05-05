@@ -18,6 +18,7 @@ let currentRecordsKey = localStorage.getItem(LAST_RECORDS_KEY) || "";
 let viewerRecords = [];
 const activeViewerRecords = new Map();
 let durationRefreshTimer = null;
+let recentRecordsExpanded = true;
 let earlierRecordsExpanded = false;
 
 function getShareSupportIssue() {
@@ -136,14 +137,13 @@ function parseViewerInfo(viewerUid) {
 
 function getViewerDeviceKey(viewerUid, info = parseViewerInfo(viewerUid)) {
     const vid = info.visitorId && info.visitorId !== "N/A" ? info.visitorId : "";
-    const sid = info.sessionId && info.sessionId !== "N/A" ? info.sessionId : "";
     const fp = info.fp && info.fp !== "N/A" ? info.fp : "";
     
-    if (vid && sid && fp) {
-        return `${vid}_${sid}_${fp}`;
+    if (vid && fp) {
+        return `${vid}_${fp}`;
     }
     
-    return sid || vid || fp || viewerUid;
+    return vid || fp || viewerUid;
 }
 
 function formatDecimal(value, digits = 2) {
@@ -209,18 +209,20 @@ function buildRecordGroupHtml(title, records, options = {}) {
     if (!records.length) return "";
 
     const collapsed = Boolean(options.collapsed);
-    const toggleHtml = options.toggleId
-        ? `<button class="mini-btn record-group-toggle" data-toggle-record-group="${escapeHtml(options.toggleId)}" type="button">${collapsed ? "展开" : "收起"}</button>`
-        : "";
+    const groupId = options.groupId || title;
+    const escapedGroupId = escapeHtml(groupId);
 
     return `
-        <section class="record-group${collapsed ? " collapsed" : ""}" data-record-group="${escapeHtml(options.toggleId || title)}">
+        <section class="record-group${collapsed ? " collapsed" : ""}" data-record-group="${escapedGroupId}">
             <div class="record-group-header">
                 <div class="record-group-summary">
                     <h4>${escapeHtml(title)}</h4>
-                    <span>${records.length} 条</span>
+                    <span class="record-group-count">${records.length} 条</span>
                 </div>
-                ${toggleHtml}
+                <div class="record-group-actions">
+                    <button class="mini-btn record-group-toggle" data-toggle-record-group="${escapedGroupId}" type="button" aria-expanded="${String(!collapsed)}">${collapsed ? "展开" : "收起"}</button>
+                    <button class="mini-btn record-group-clear" data-clear-record-group="${escapedGroupId}" type="button">清空</button>
+                </div>
             </div>
             <div class="record-group-body">
                 ${records.map(buildRecordHtml).join("")}
@@ -240,9 +242,38 @@ function bindRecordGroupToggles() {
             group.classList.toggle('collapsed', !nextExpanded);
             toggleBtn.innerText = nextExpanded ? "收起" : "展开";
             toggleBtn.setAttribute("aria-expanded", String(nextExpanded));
+            if (groupId === "recent") recentRecordsExpanded = nextExpanded;
             if (groupId === "earlier") earlierRecordsExpanded = nextExpanded;
         };
     });
+
+    document.querySelectorAll('[data-clear-record-group]').forEach((clearBtn) => {
+        clearBtn.onclick = () => {
+            clearViewerRecordGroup(clearBtn.dataset.clearRecordGroup);
+        };
+    });
+}
+
+function getSortedViewerRecordGroups() {
+    const sortedRecords = viewerRecords
+        .filter((record) => record.endedAt)
+        .slice()
+        .reverse();
+    return {
+        recent: sortedRecords.slice(0, RECENT_RECORD_LIMIT),
+        earlier: sortedRecords.slice(RECENT_RECORD_LIMIT)
+    };
+}
+
+function clearViewerRecordGroup(groupId) {
+    const groups = getSortedViewerRecordGroups();
+    const recordsToClear = groups[groupId] || [];
+    if (!recordsToClear.length) return;
+
+    const idsToClear = new Set(recordsToClear.map((record) => record.id));
+    viewerRecords = viewerRecords.filter((record) => !idsToClear.has(record.id) || !record.endedAt);
+    saveViewerRecords();
+    renderViewerRecords();
 }
 
 function refreshLiveDurations() {
@@ -299,23 +330,24 @@ function renderViewerRecords() {
     const container = document.getElementById("recordsContainer");
     if (!panel || !container) return;
 
-    if (!viewerRecords.length) {
+    const { recent: recentRecords, earlier: earlierRecords } = getSortedViewerRecordGroups();
+
+    if (!recentRecords.length && !earlierRecords.length) {
         container.innerHTML = '<div class="empty-state">暂无打开记录</div>';
         panel.style.display = currentRecordsKey ? "block" : "none";
         syncDurationRefreshTimer();
         return;
     }
 
-    const sortedRecords = viewerRecords.slice().reverse();
-    const recentRecords = sortedRecords.slice(0, RECENT_RECORD_LIMIT);
-    const earlierRecords = sortedRecords.slice(RECENT_RECORD_LIMIT);
-
     panel.style.display = "block";
     container.innerHTML = [
-        buildRecordGroupHtml("近期设备记录", recentRecords),
+        buildRecordGroupHtml("近期设备记录", recentRecords, {
+            collapsed: !recentRecordsExpanded,
+            groupId: "recent"
+        }),
         buildRecordGroupHtml("更早设备记录", earlierRecords, {
             collapsed: !earlierRecordsExpanded,
-            toggleId: "earlier"
+            groupId: "earlier"
         })
     ].join("") || '<div class="empty-state">暂无打开记录</div>';
     bindRecordGroupToggles();
@@ -487,20 +519,6 @@ sharePromptInput.addEventListener('input', function() {
 
 loadSavedViewerRecords();
 setupPanelToggle("viewerList", true);
-setupPanelToggle("viewerRecordPanel", false);
-
-document.getElementById('clearRecordsBtn').onclick = () => {
-    viewerRecords = Array.from(activeViewerRecords.values());
-    if (viewerRecords.length) {
-        saveViewerRecords();
-    } else if (currentRecordsKey) {
-        localStorage.removeItem(currentRecordsKey);
-        localStorage.removeItem(LAST_RECORDS_KEY);
-        localStorage.removeItem(VIEWER_RECORDS_CACHE_KEY);
-        currentRecordsKey = "";
-    }
-    renderViewerRecords();
-};
 
 // 清晰度配置项 (升级版)
 const QUALITY_CONFIGS = {
@@ -733,7 +751,6 @@ document.getElementById('generateBtn').onclick = async () => {
         document.getElementById('shareInfo').style.display = 'block';
         document.getElementById('viewerList').style.display = 'block';
         document.getElementById('viewerRecordPanel').style.display = 'block';
-        setPanelExpanded("viewerRecordPanel", true);
 
         const promptPreview = document.getElementById('promptPreview');
         if (sharePrompt) {
@@ -808,7 +825,7 @@ document.getElementById('generateBtn').onclick = async () => {
             }
 
             // 本地重新计算访问次数
-            const pastVisits = viewerRecords.filter(r => r.deviceKey === deviceKey).length;
+            const pastVisits = viewerRecords.filter((record) => getViewerDeviceKey(record.agoraUid || "", record.info || {}) === deviceKey).length;
             info.visits = pastVisits + 1;
 
             const record = {

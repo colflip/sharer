@@ -188,6 +188,7 @@ h2 {
     border-radius: 12px;
     text-align: left;
     display: none;
+    position: relative;
 }
 
 .viewer-panel h3 {
@@ -428,6 +429,7 @@ h2 {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-left: auto;
 }
 
 .viewer-panel.collapsed .panel-body {
@@ -445,7 +447,7 @@ h2 {
 }
 
 .record-group {
-    padding-top: 6px;
+    padding-top: 0;
 }
 
 .record-group + .record-group {
@@ -459,20 +461,20 @@ h2 {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: 4px;
+    margin-bottom: 10px;
 }
 
 .record-group-header h4 {
     margin: 0;
     color: #8e8e93;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 500;
 }
 
-.record-group-header span {
+.record-group-count {
     display: inline-block;
     color: rgba(99, 99, 102, 0.6);
-    font-size: 9px;
+    font-size: 12.5px;
     white-space: nowrap;
 }
 
@@ -481,6 +483,13 @@ h2 {
     align-items: baseline;
     gap: 6px;
     min-width: 0;
+}
+
+.record-group-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .record-group.collapsed .record-group-body {
