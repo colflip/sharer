@@ -135,10 +135,15 @@ function parseViewerInfo(viewerUid) {
 }
 
 function getViewerDeviceKey(viewerUid, info = parseViewerInfo(viewerUid)) {
-    const sessionId = info.sessionId && info.sessionId !== "N/A" ? info.sessionId : "";
-    const uid = info.uid && info.uid !== "N/A" ? info.uid : "";
+    const vid = info.visitorId && info.visitorId !== "N/A" ? info.visitorId : "";
+    const sid = info.sessionId && info.sessionId !== "N/A" ? info.sessionId : "";
     const fp = info.fp && info.fp !== "N/A" ? info.fp : "";
-    return sessionId || uid || fp || viewerUid;
+    
+    if (vid && sid && fp) {
+        return `${vid}_${sid}_${fp}`;
+    }
+    
+    return sid || vid || fp || viewerUid;
 }
 
 function formatDecimal(value, digits = 2) {
@@ -802,6 +807,7 @@ document.getElementById('generateBtn').onclick = async () => {
             if (typeof user.uid !== 'string' || !user.uid.startsWith("viewer|")) return;
             const info = parseViewerInfo(user.uid);
             const deviceKey = getViewerDeviceKey(user.uid, info);
+            
             const existingRecord = activeViewerRecords.get(deviceKey);
             if (existingRecord) {
                 const activeAgoraUids = Array.isArray(existingRecord.activeAgoraUids)
@@ -817,6 +823,10 @@ document.getElementById('generateBtn').onclick = async () => {
                 renderViewerRecords();
                 return;
             }
+
+            // 本地重新计算访问次数
+            const pastVisits = viewerRecords.filter(r => r.deviceKey === deviceKey).length;
+            info.visits = pastVisits + 1;
 
             const record = {
                 id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
