@@ -11,6 +11,7 @@ const OLD_DEFAULT_SHARE_PROMPTS = [
     "请使用浏览器打开链接，输入邀请码加入投屏。"
 ];
 const SHARE_PROMPT_KEY = "sc_share_prompt";
+const SHARE_THEME_KEY = "sc_share_theme";
 const LAST_RECORDS_KEY = "sc_latest_viewer_records_key";
 const VIEWER_RECORDS_CACHE_KEY = "sc_viewer_records_cache";
 const RECENT_RECORD_LIMIT = 10;
@@ -20,6 +21,31 @@ const activeViewerRecords = new Map();
 let durationRefreshTimer = null;
 let recentRecordsExpanded = true;
 let earlierRecordsExpanded = false;
+
+function applyShareTheme(theme) {
+    const normalizedTheme = theme === "light" ? "light" : "dark";
+    document.body.classList.toggle("theme-light", normalizedTheme === "light");
+    document.body.classList.toggle("theme-dark", normalizedTheme === "dark");
+
+    const themeToggle = document.getElementById("themeToggle");
+    const themeToggleText = document.getElementById("themeToggleText");
+    if (themeToggle) themeToggle.checked = normalizedTheme === "light";
+    if (themeToggleText) themeToggleText.innerText = normalizedTheme === "light" ? "白天" : "夜间";
+}
+
+function setupShareThemeToggle() {
+    const savedTheme = localStorage.getItem(SHARE_THEME_KEY);
+    const preferredTheme = savedTheme || (window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    applyShareTheme(preferredTheme);
+
+    const themeToggle = document.getElementById("themeToggle");
+    if (!themeToggle) return;
+    themeToggle.addEventListener("change", () => {
+        const nextTheme = themeToggle.checked ? "light" : "dark";
+        localStorage.setItem(SHARE_THEME_KEY, nextTheme);
+        applyShareTheme(nextTheme);
+    });
+}
 
 function getShareSupportIssue() {
     const ua = navigator.userAgent;
@@ -623,6 +649,7 @@ sharePromptInput.addEventListener('input', function() {
     localStorage.setItem(SHARE_PROMPT_KEY, this.value);
 });
 
+setupShareThemeToggle();
 loadSavedViewerRecords();
 setupPanelToggle("viewerList", true);
 
