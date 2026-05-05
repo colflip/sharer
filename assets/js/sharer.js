@@ -189,10 +189,8 @@ function buildInfoTags(info) {
 
 function buildTimeTags(record) {
     const info = record.info || {};
-    const timeZone = info.timeZone && info.timeZone !== "unknown" ? escapeHtml(info.timeZone) : "";
     return `
         <span class="tag tag-visits">第 ${escapeHtml(info.visits || "1")} 次访问</span>
-        ${timeZone ? `<span class="tag">${timeZone}</span>` : ""}
         <span class="tag">打开: ${escapeHtml(formatTime(record.openedAt))}</span>
         <span class="tag">结束: ${escapeHtml(formatTime(record.endedAt))}</span>
         <span class="tag duration-tag" data-opened-at="${escapeHtml(record.openedAt || "")}" data-ended-at="${escapeHtml(record.endedAt || "")}">连接时长: ${escapeHtml(formatDuration(record.openedAt, record.endedAt))}</span>
@@ -345,22 +343,22 @@ function buildActiveViewerHtml(record) {
     const isOnline = !record.endedAt;
 
     return `
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-            <div class="viewer-row" style="flex: 1; min-width: 0;">
-                <div class="viewer-main">
-                    <div class="dot" style="background: ${isOnline ? '#34c759' : '#8e8e93'};"></div>
-                    <b class="viewer-device-name">${escapeHtml(info.osBrowser)}</b>
-                </div>
-                <div class="viewer-details">
-                    ${buildInfoTags(info)}
-                </div>
+        <div class="viewer-row">
+            <div class="viewer-main">
+                <div class="dot" style="background: ${isOnline ? '#34c759' : '#8e8e93'};"></div>
+                <b class="viewer-device-name">${escapeHtml(info.osBrowser)}</b>
             </div>
-            <div class="viewer-status" style="flex-shrink: 0; font-weight: 500; color: ${isOnline ? '#34c759' : '#8e8e93'};">
-                ${isOnline ? '在线中' : '已结束'}
+            <div class="viewer-details">
+                ${buildInfoTags(info)}
             </div>
         </div>
-        <div class="viewer-times">
-            ${buildTimeTags(record)}
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div class="viewer-times" style="flex: 1; min-width: 0;">
+                ${buildTimeTags(record)}
+            </div>
+            <div class="viewer-status" style="flex-shrink: 0; margin-left: 8px; font-weight: 500; color: ${isOnline ? '#34c759' : '#8e8e93'};">
+                ${isOnline ? '在线中' : '已结束'}
+            </div>
         </div>
     `;
 }
