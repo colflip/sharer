@@ -3,3 +3,6 @@ services:
     name: sharer
     buildCommand: npm run build
     staticPublishPath: .
+    envVars:
+      - key: AGORA_APP_ID
+        sync: false

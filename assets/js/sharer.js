@@ -1,4 +1,4 @@
-const APP_ID = window.ScreenCastConfig.APP_ID;
+const APP_ID = window.ScreenCastConfig?.APP_ID || "";
 let client, screenTrack;
 let countdownTimer = null; // 全局定时器引用
 let totalSecondsRemaining = 0; // 全局剩余秒数
@@ -1082,6 +1082,11 @@ document.getElementById('generateBtn').onclick = async () => {
     const btn = document.getElementById('generateBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const status = document.getElementById('status');
+
+    if (!APP_ID) {
+        status.innerText = "🔴 分享失败: 缺少声网 APP_ID，请在 Render 环境变量中配置 AGORA_APP_ID 后重新部署。";
+        return;
+    }
 
     let preflightNotice = "";
     if (window.location.protocol === 'file:') {

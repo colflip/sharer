@@ -9,3 +9,4 @@ coverage/
 .tmp/
 *.log
 assets/version.json
+assets/js/config.js

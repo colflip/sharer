@@ -1,4 +1,4 @@
-const APP_ID = window.ScreenCastConfig.APP_ID;
+const APP_ID = window.ScreenCastConfig?.APP_ID || "";
 
 function createShortId(prefix = "") {
     const randomPart = Math.random().toString(36).substring(2, 8);
@@ -135,6 +135,11 @@ document.getElementById('enterBtn').onclick = async () => {
     const enterBtn = document.getElementById('enterBtn');
     const pwd = document.getElementById('pwdInput').value.trim();
     const errorMsg = document.getElementById('error-msg');
+
+    if (!APP_ID) {
+        errorMsg.innerText = "缺少声网 APP_ID，请联系分享者检查部署配置";
+        return;
+    }
 
     if (pwd.length !== 4) {
         errorMsg.innerText = "请输入 4 位数字密码";
