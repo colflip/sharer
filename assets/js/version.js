@@ -1,6 +1,6 @@
 (function renderDeployVersion() {
     const config = window.ScreenCastConfig || {};
-    const repo = config.GITHUB_REPO || "";
+    const repo = config.GITHUB_REPO || "colflip/sharer";
     const repoUrl = repo ? `https://github.com/${repo}` : "";
 
     function shortSha(value) {
@@ -52,11 +52,28 @@
         el.setAttribute("aria-label", "Deploy version failed to load");
     }
 
-    fetch("assets/version.json", { cache: "no-store" })
-        .then((response) => {
-            if (!response.ok) throw new Error("Failed to load deploy version");
-            return response.json();
-        })
-        .then((data) => setVersion(data.sha || data.shortSha))
+    function fetchGitHubVersion() {
+        if (!repo) return Promise.reject(new Error("Missing GitHub repo"));
+
+        return fetch(`https://api.github.com/repos/${repo}/commits/main`, { cache: "no-store" })
+            .then((response) => {
+                if (!response.ok) throw new Error("Failed to load GitHub version");
+                return response.json();
+            })
+            .then((data) => data.sha);
+    }
+
+    function fetchBuildVersion() {
+        return fetch("assets/version.json", { cache: "no-store" })
+            .then((response) => {
+                if (!response.ok) throw new Error("Failed to load deploy version");
+                return response.json();
+            })
+            .then((data) => data.sha || data.shortSha);
+    }
+
+    fetchGitHubVersion()
+        .catch(fetchBuildVersion)
+        .then(setVersion)
         .catch(setVersionError);
 })();
