@@ -1,4 +1,8 @@
 (function renderDeployVersion() {
+    const config = window.ScreenCastConfig || {};
+    const repo = config.GITHUB_REPO || "";
+    const repoUrl = repo ? `https://github.com/${repo}` : "";
+
     function shortSha(value) {
         return String(value || "").slice(0, 7);
     }
@@ -22,16 +26,28 @@
         if (!version) return;
 
         const el = ensureVersionEl();
-        el.removeAttribute("href");
-        el.removeAttribute("target");
+        if (repoUrl) {
+            el.href = repoUrl;
+            el.target = "_blank";
+            el.rel = "noopener noreferrer";
+        } else {
+            el.removeAttribute("href");
+            el.removeAttribute("target");
+        }
         el.textContent = version;
         el.setAttribute("aria-label", `Deploy version ${version}`);
     }
 
     function setVersionError() {
         const el = ensureVersionEl();
-        el.removeAttribute("href");
-        el.removeAttribute("target");
+        if (repoUrl) {
+            el.href = repoUrl;
+            el.target = "_blank";
+            el.rel = "noopener noreferrer";
+        } else {
+            el.removeAttribute("href");
+            el.removeAttribute("target");
+        }
         el.textContent = "版本获取失败";
         el.setAttribute("aria-label", "Deploy version failed to load");
     }

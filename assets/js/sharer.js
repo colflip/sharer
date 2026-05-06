@@ -730,12 +730,6 @@ function getQualityStepDown(qualityKey) {
     return ordered[index - 1];
 }
 
-function formatShareConfigLabel(qualityKey, bitrateKey) {
-    const config = getEncoderConfigFor(qualityKey, bitrateKey);
-    if (!config) return `${QUALITY_LABELS[qualityKey] || qualityKey} · ${BITRATE_LABELS[bitrateKey] || bitrateKey}`;
-    return `${QUALITY_LABELS[qualityKey] || qualityKey} · ${config.width}×${config.height} · ${config.frameRate}fps · ${BITRATE_LABELS[bitrateKey] || bitrateKey}`;
-}
-
 function setBitrateActive(bitrateKey) {
     document.querySelectorAll('#bitrateSelector .control-item').forEach(item => {
         item.classList.toggle('active', item.getAttribute('data-bitrate') === bitrateKey);
@@ -895,9 +889,7 @@ async function autoDowngradeForWeakNetwork() {
     try {
         await applyAutoNetworkConfig(nextQuality, nextBitrate);
         autoNetworkState.downgraded = true;
-        const loweredLabel = formatShareConfigLabel(nextQuality, nextBitrate);
-        const originalLabel = formatShareConfigLabel(autoNetworkState.originalQuality, autoNetworkState.originalBitrate);
-        networkNotice = `🟡 网络较弱，已自动降至 ${loweredLabel}；网络恢复后回到 ${originalLabel}`;
+        networkNotice = `🟡 网络较弱，已自动降画质`;
         updateShareStatus();
     } catch (err) {
         console.warn("自动降级失败:", err);
@@ -916,7 +908,7 @@ async function autoRestoreAfterNetworkRecovery() {
         autoNetworkState.originalBitrate = "";
         autoNetworkState.goodSamples = 0;
         autoNetworkState.weakSamples = 0;
-        networkNotice = `🟢 网络已恢复，已回到 ${formatShareConfigLabel(originalQuality, originalBitrate)}`;
+        networkNotice = "🟢 网络已恢复，画质已还原";
         updateShareStatus();
         clearTimeout(networkRecoveryTimer);
         networkRecoveryTimer = setTimeout(() => {
