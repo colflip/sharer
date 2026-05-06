@@ -4,7 +4,8 @@
     "private": true,
     "description": "Static Agora-based screen sharing pages.",
     "scripts": {
+        "build": "node scripts/write-version.js",
         "serve": "python3 -m http.server 4173",
-        "check": "node --check assets/js/config.js && node --check assets/js/agora-loader.js && node --check assets/js/viewer.js && node --check assets/js/sharer.js"
+        "check": "node --check scripts/write-version.js && node --check assets/js/config.js && node --check assets/js/version.js && node --check assets/js/agora-loader.js && node --check assets/js/viewer.js && node --check assets/js/sharer.js"
     }
 }

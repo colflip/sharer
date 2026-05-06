@@ -8,3 +8,4 @@ dist/
 coverage/
 .tmp/
 *.log
+assets/version.json

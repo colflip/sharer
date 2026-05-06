@@ -5,6 +5,15 @@ let totalSecondsRemaining = 0; // 全局剩余秒数
 let lastAutoDowngradeAt = 0;
 let isScreenPaused = false;
 let currentShareHasLimit = false;
+let networkNotice = "";
+let networkRecoveryTimer = null;
+const autoNetworkState = {
+    downgraded: false,
+    originalQuality: "",
+    originalBitrate: "",
+    goodSamples: 0,
+    weakSamples: 0
+};
 const DEFAULT_SHARE_PROMPT = "请使用浏览器打开链接，查看投屏";
 const OLD_DEFAULT_SHARE_PROMPTS = [
     "请使用浏览器打开链接，参加投屏",
@@ -589,9 +598,10 @@ function updateShareStatus() {
     const statusEl = document.getElementById('status');
     if (!statusEl) return;
 
-    statusEl.innerText = isScreenPaused
+    const baseStatus = isScreenPaused
         ? "⏸️ 已暂停投屏"
         : "🟢 分享中";
+    statusEl.innerText = [baseStatus, networkNotice].filter(Boolean).join("\n");
     updateShareOverview();
 }
 
@@ -699,6 +709,50 @@ function getEncoderConfig(qualityKey = selectedQuality) {
     };
 }
 
+function getEncoderConfigFor(qualityKey = selectedQuality, bitrateKey = selectedBitrate) {
+    const config = QUALITY_CONFIGS[qualityKey];
+    if (!config) return null;
+    const bitratePreset = BITRATE_PRESETS[bitrateKey] || BITRATE_PRESETS.standard;
+
+    return {
+        width: config.width,
+        height: config.height,
+        frameRate: config.frameRate,
+        bitrateMin: Math.round(config.bitrateMin * bitratePreset.minScale),
+        bitrateMax: Math.round(config.bitrateMax * bitratePreset.maxScale)
+    };
+}
+
+function getQualityStepDown(qualityKey) {
+    const ordered = ["fluent", "standard", "high", "pro_2k", "pro_4k"];
+    const index = ordered.indexOf(qualityKey);
+    if (index <= 0) return "fluent";
+    return ordered[index - 1];
+}
+
+function formatShareConfigLabel(qualityKey, bitrateKey) {
+    const config = getEncoderConfigFor(qualityKey, bitrateKey);
+    if (!config) return `${QUALITY_LABELS[qualityKey] || qualityKey} · ${BITRATE_LABELS[bitrateKey] || bitrateKey}`;
+    return `${QUALITY_LABELS[qualityKey] || qualityKey} · ${config.width}×${config.height} · ${config.frameRate}fps · ${BITRATE_LABELS[bitrateKey] || bitrateKey}`;
+}
+
+function setBitrateActive(bitrateKey) {
+    document.querySelectorAll('#bitrateSelector .control-item').forEach(item => {
+        item.classList.toggle('active', item.getAttribute('data-bitrate') === bitrateKey);
+    });
+}
+
+function resetAutoNetworkState() {
+    autoNetworkState.downgraded = false;
+    autoNetworkState.originalQuality = "";
+    autoNetworkState.originalBitrate = "";
+    autoNetworkState.goodSamples = 0;
+    autoNetworkState.weakSamples = 0;
+    networkNotice = "";
+    clearTimeout(networkRecoveryTimer);
+    networkRecoveryTimer = null;
+}
+
 async function applyScreenQuality(qualityKey) {
     if (!screenTrack) return;
     const config = getEncoderConfig(qualityKey);
@@ -804,18 +858,77 @@ async function refreshQualitySupport() {
     }
 }
 
-async function autoDowngradeForWeakNetwork() {
-    if (!screenTrack || isScreenPaused || selectedQuality === "high") return;
-    const now = Date.now();
-    if (now - lastAutoDowngradeAt < 30000) return;
-    lastAutoDowngradeAt = now;
-    selectedQuality = "high";
+async function applyAutoNetworkConfig(nextQuality, nextBitrate) {
+    if (!screenTrack) return;
+    const config = getEncoderConfigFor(nextQuality, nextBitrate);
+    if (!config) return;
+
+    await screenTrack.setEncoderConfiguration({
+        width: config.width,
+        height: config.height,
+        frameRate: config.frameRate,
+        bitrateMin: config.bitrateMin,
+        bitrateMax: config.bitrateMax
+    });
+
+    selectedQuality = nextQuality;
+    selectedBitrate = nextBitrate;
     setQualityActive(selectedQuality);
+    setBitrateActive(selectedBitrate);
+    updateShareStatus();
+}
+
+async function autoDowngradeForWeakNetwork() {
+    if (!screenTrack || isScreenPaused) return;
+    const now = Date.now();
+    if (now - lastAutoDowngradeAt < 20000) return;
+    lastAutoDowngradeAt = now;
+
+    if (!autoNetworkState.downgraded) {
+        autoNetworkState.originalQuality = selectedQuality;
+        autoNetworkState.originalBitrate = selectedBitrate;
+    }
+
+    const nextQuality = getQualityStepDown(selectedQuality);
+    const nextBitrate = "low";
+
     try {
-        await applyScreenQuality(selectedQuality);
-        document.getElementById('status').innerText = "🟡 网络较弱，已自动降至 1080P";
+        await applyAutoNetworkConfig(nextQuality, nextBitrate);
+        autoNetworkState.downgraded = true;
+        const loweredLabel = formatShareConfigLabel(nextQuality, nextBitrate);
+        const originalLabel = formatShareConfigLabel(autoNetworkState.originalQuality, autoNetworkState.originalBitrate);
+        networkNotice = `🟡 网络较弱，已自动降至 ${loweredLabel}；网络恢复后回到 ${originalLabel}`;
+        updateShareStatus();
     } catch (err) {
         console.warn("自动降级失败:", err);
+    }
+}
+
+async function autoRestoreAfterNetworkRecovery() {
+    if (!screenTrack || isScreenPaused || !autoNetworkState.downgraded) return;
+    const originalQuality = autoNetworkState.originalQuality || selectedQuality;
+    const originalBitrate = autoNetworkState.originalBitrate || selectedBitrate;
+
+    try {
+        await applyAutoNetworkConfig(originalQuality, originalBitrate);
+        autoNetworkState.downgraded = false;
+        autoNetworkState.originalQuality = "";
+        autoNetworkState.originalBitrate = "";
+        autoNetworkState.goodSamples = 0;
+        autoNetworkState.weakSamples = 0;
+        networkNotice = `🟢 网络已恢复，已回到 ${formatShareConfigLabel(originalQuality, originalBitrate)}`;
+        updateShareStatus();
+        clearTimeout(networkRecoveryTimer);
+        networkRecoveryTimer = setTimeout(() => {
+            if (!autoNetworkState.downgraded) {
+                networkNotice = "";
+                updateShareStatus();
+            }
+        }, 6000);
+    } catch (err) {
+        console.warn("自动恢复配置失败:", err);
+        networkNotice = "🟡 网络已恢复，但自动回到原配置失败，请手动切换清晰度或码率";
+        updateShareStatus();
     }
 }
 
@@ -831,8 +944,21 @@ function bindClientHealthEvents(statusEl) {
 
     client.on("network-quality", (quality) => {
         const uplink = quality.uplinkNetworkQuality;
-        if (uplink >= 5) {
+        if (uplink >= 4) {
+            autoNetworkState.weakSamples += 1;
+            autoNetworkState.goodSamples = 0;
+        } else if (uplink > 0 && uplink <= 2) {
+            autoNetworkState.goodSamples += 1;
+            autoNetworkState.weakSamples = 0;
+        } else {
+            autoNetworkState.weakSamples = 0;
+            autoNetworkState.goodSamples = 0;
+        }
+
+        if (autoNetworkState.weakSamples >= 2) {
             autoDowngradeForWeakNetwork();
+        } else if (autoNetworkState.goodSamples >= 4) {
+            autoRestoreAfterNetworkRecovery();
         }
     });
 }
@@ -843,6 +969,7 @@ document.querySelectorAll('#qualitySelector .control-item').forEach(item => {
         if (document.getElementById('generateBtn').disabled && !screenTrack) return; // 只有在未开始投屏时才禁用
         const nextQuality = item.getAttribute('data-q');
         if (isQualityDisabled(nextQuality)) return;
+        resetAutoNetworkState();
         selectedQuality = nextQuality;
         setQualityActive(selectedQuality);
         updateShareOverview();
@@ -865,9 +992,9 @@ refreshQualitySupport();
 document.querySelectorAll('#bitrateSelector .control-item').forEach(item => {
     item.onclick = async () => {
         if (document.getElementById('generateBtn').disabled && !screenTrack) return;
+        resetAutoNetworkState();
         selectedBitrate = item.getAttribute('data-bitrate');
-        document.querySelectorAll('#bitrateSelector .control-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
+        setBitrateActive(selectedBitrate);
         await refreshQualitySupport();
 
         if (screenTrack) {
@@ -984,6 +1111,7 @@ document.getElementById('generateBtn').onclick = async () => {
 
     try {
         btn.disabled = true;
+        resetAutoNetworkState();
         status.innerText = preflightNotice || "正在加载投屏组件...";
         await ensureAgoraSdk();
         status.innerText = preflightNotice
@@ -1186,6 +1314,7 @@ async function cleanup() {
     isScreenPaused = false;
     currentShareHasLimit = false;
     totalSecondsRemaining = 0;
+    resetAutoNetworkState();
     if (pauseBtn) {
         pauseBtn.style.display = 'none';
         pauseBtn.disabled = false;
